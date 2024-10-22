@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
         const meetingId = data[0].id;
         const participant = await supabase
           .from("participants")
-          .insert({ useId: user.data.id, meetingId: meetingId });
+          .insert({ useId: user.data.id, meetingId: meetingId, status: "ACCEPT" });
 
         if (participant.error) {
           return new Response(
