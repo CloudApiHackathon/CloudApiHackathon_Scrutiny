@@ -6,8 +6,8 @@ export class Supabase {
     public static getInstance(accessToken: string): SupabaseClient {
         if (!Supabase.instance) {
             Supabase.instance = createClient(
-                Deno.env.get("URL")!,
-                Deno.env.get("KEY")!,
+                Deno.env.get("SUPABASE_URL") ?? Deno.env.get("URL")!,
+                Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("KEY")!,
                 {
                     global: {
                         headers: {

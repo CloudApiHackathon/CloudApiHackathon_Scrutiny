@@ -10,11 +10,13 @@ import { verifyToken } from "../utils/auth.ts";
 Deno.serve(async (req) => {
   const method = req.method;
 
-  const authHeader = req.headers.get("Authorization")!;
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) {
+    return new Response("Authorization header missing", { status: 401 });
+  }
   const token = authHeader.replace("Bearer ", "");
   const supabase = Supabase.getInstance(token);
   const payload = await verifyToken(token);
-
   if (!payload) {
     return new Response("Unauthorized", { status: 401 });
   }

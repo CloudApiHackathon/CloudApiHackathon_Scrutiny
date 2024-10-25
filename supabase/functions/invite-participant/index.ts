@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
         }
 
         // If not, add the user to the meeting's participants
-        const { data: joinData, error: joinError } = await supabase
+        const { data: _, error: joinError } = await supabase
           .from("participants")
           .insert({ meetingId, userId });
 

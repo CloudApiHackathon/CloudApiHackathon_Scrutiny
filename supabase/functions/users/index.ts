@@ -12,7 +12,9 @@ Deno.serve(async (req) => {
     const method = req.method;
 
     const authHeader = req.headers.get("Authorization")!;
-
+    if (!authHeader) {
+      return new Response("Authorization header missing", { status: 401 });
+    }
     const token = authHeader.replace("Bearer ", "");
     const supabase = Supabase.getInstance(token);
     const payload = await verifyToken(token);
@@ -20,22 +22,21 @@ Deno.serve(async (req) => {
       return new Response("Unauthorized", { status: 401 });
     }
 
-    const user = await supabase.from("user")
-      .select("*")
-      .eq(
-        "tokenIdentifier",
-        payload.sub,
-      ).single();
-
-    if (user.error) {
-      return new Response(user.error.message, { status: 500 });
-    }
-
     switch (method) {
       case "GET": {
+        const { data: userData, error: userError } = await supabase.from("user")
+          .select("*")
+          .eq(
+            "tokenIdentifier",
+            payload.sub,
+          ).single();
+
+        if (userError) {
+          return new Response(userError.message, { status: 401 });
+        }
         const id = req.url.split("/").pop();
         if (id == "all") {
-          if (user.data.role !== "admin") {
+          if (userData.role !== "ADMIN") {
             return new Response("Unauthorized", { status: 401 });
           }
           const { data, error } = await supabase.from("user").select("*");
@@ -44,10 +45,10 @@ Deno.serve(async (req) => {
           }
           return new Response(JSON.stringify(data), { status: 200 });
         } else if (id == "me") {
-          if (user.count === 0) {
+          if (userData.count === 0) {
             return new Response("User not found", { status: 404 });
           }
-          return new Response(JSON.stringify(user.data), { status: 200 });
+          return new Response(JSON.stringify(userData), { status: 200 });
         } else {
           const { data, error } = await supabase
             .from("user")
@@ -61,9 +62,6 @@ Deno.serve(async (req) => {
         }
       }
       case "POST": {
-        if (user?.count! > 0) {
-          return new Response("User already exists", { status: 400 });
-        }
         const body = await req.json();
         const { data, error } = await supabase.from("user").insert(body);
         if (error) {
@@ -72,10 +70,20 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify(data), { status: 200 });
       }
       case "PUT": {
+        const { data: userData, error: userError } = await supabase.from("user")
+          .select("*")
+          .eq(
+            "tokenIdentifier",
+            payload.sub,
+          ).single();
+
+        if (userError) {
+          return new Response(userError.message, { status: 401 });
+        }
         const body = await req.json();
         const { data, error } = await supabase.from("user").update(body).eq(
           "id",
-          user.data.id,
+          userData.id,
         );
         if (error) {
           return new Response(error.message, { status: 500 });
@@ -83,9 +91,19 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify(data), { status: 200 });
       }
       case "DELETE": {
+        const { data: userData, error: userError } = await supabase.from("user")
+          .select("*")
+          .eq(
+            "tokenIdentifier",
+            payload.sub,
+          ).single();
+
+        if (userError) {
+          return new Response(userError.message, { status: 401 });
+        }
         const { data, error } = await supabase.from("user").delete().eq(
           "id",
-          user.data.id,
+          userData.id,
         );
         if (error) {
           return new Response(error.message, { status: 500 });
