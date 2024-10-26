@@ -1,40 +1,25 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { decodeToken, encodeToken, verifyToken } from "../utils/auth.ts";
+import { verifyToken } from "../utils/auth.ts";
 import { Supabase } from "../utils/supabase.ts";
 
 Deno.serve(async (req) => {
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response("Authorization header missing", { status: 401 });
-    }
-
-    const token = authHeader.replace("Bearer ", "");
-    const payload = decodeToken(token);
-    if (!payload) return new Response("Unauthorized", { status: 401 });
-
-    const user = await Supabase.getInstance(token)
-      .from("users")
-      .select("*")
-      .eq("id", payload.sub)
-      .single();
-    if (!user.data) return new Response("User not found", { status: 404 });
-    if (user.error) {
-      return new Response(`Error fetching user: ${user.error.message}`, {
-        status: 500,
-      });
-    }
-
-    const supabase = Supabase.getInstance(token);
     const method = req.method;
-
+    console.log(method);
     switch (method) {
       case "POST": {
+        const authHeader = req.headers.get("Authorization");
+        if (!authHeader) {
+          return new Response("Authorization header missing", { status: 401 });
+        }
+
+        const bearerToken = authHeader.replace("Bearer ", "");
+        const payload = verifyToken(bearerToken);
+        if (!payload) return new Response("Unauthorized", { status: 401 });
+
         const { meetingId, userId } = await req.json();
         const apiGateWay = Deno.env.get("API_GATEWAY_URL");
         const invitationLink = new URL(`${apiGateWay}/invite-participant`);
-        const token = encodeToken({ meetingId, userId }); // Correct token generation
-        invitationLink.searchParams.set("token", token);
         invitationLink.searchParams.set("meetingId", meetingId);
         invitationLink.searchParams.set("userId", userId);
 
@@ -43,18 +28,18 @@ Deno.serve(async (req) => {
           { status: 200 },
         );
       }
-
       case "GET": {
         // Extract the token from the request URL (for example: /invite-participant?token=...)
         const url = new URL(req.url);
-        const token = url.searchParams.get("token");
-        if (!token) return new Response("Token is required", { status: 400 });
-
-        // Decode the token to get meetingId and userId
-        const payload = decodeToken(token);
-        if (!payload) return new Response("Invalid token", { status: 400 });
-
-        const { meetingId, userId } = payload;
+        const code = url.searchParams.get("code");
+        if (!code) return new Response("code is missing", { status: 400 });
+      
+        const meetingId = url.searchParams.get("meetingId");
+        const userId = url.searchParams.get("userId");
+        if (!meetingId || !userId) {
+          return new Response("meetingId and userId are required", { status: 400 });
+        }
+        const supabase = Supabase.getInstance();
 
         // Fetch participants for the given meeting
         const { data: participants, error } = await supabase
@@ -98,7 +83,6 @@ Deno.serve(async (req) => {
           302,
         );
       }
-
       default: {
         return new Response("Method not allowed", { status: 405 });
       }

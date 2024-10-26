@@ -13,29 +13,30 @@ Deno.serve(async (req) => {
     switch (method) {
       case "GET": {
         const params = new URL(req.url).searchParams;
-        console.log(req.url);
         const authorizationCode = params.get("code");
-        console.log(authorizationCode);
-        const response = await fetch("https://dev-d786ta3x4u7k7sdc.us.auth0.com/oauth/token", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
+        if (!authorizationCode) {
+          return new Response(null, { status: 201 });
+        }
+
+        const response = await fetch(
+          "https://dev-d786ta3x4u7k7sdc.us.auth0.com/oauth/token",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              grant_type: "client_credentials",
+              client_id: Deno.env.get("AUTH0_CLIENT_ID"),
+              client_secret: Deno.env.get("AUTH0_CLIENT_SECRET"),
+              audience: "https://clientcredentials.com",
+            }),
           },
-          body: JSON.stringify({
-            grant_type: "authorization_code",
-            client_id: Deno.env.get("AUTH0_CLIENT_ID"),
-            client_secret: Deno.env.get("AUTH0_CLIENT_SECRET"),
-            code: authorizationCode,
-            redirect_uri: Deno.env.get("AUTH0_REDIRECT_URI"),
-          }),
-        });
-        console.log(response);
-        const { id_token, access_token } = await response.json();
-        
-        const payload = decodeToken(id_token);
+        );
+        const { accessToken } = await response.json();
 
         return new Response(
-          JSON.stringify(payload),
+          JSON.stringify({ accessToken }),
           { headers: { "Content-Type": "application/json" } },
         );
       }

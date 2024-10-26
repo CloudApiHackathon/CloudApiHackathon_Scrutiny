@@ -56,8 +56,7 @@ export function decodeToken(token: string): Record<string, any> | null {
 
         // Parse the decoded JSON string
         return JSON.parse(decodedPayload);
-    } catch (error) {
-        console.error("Error decoding token:", error);
-        return null;
+    } catch (_) {
+        throw new Error("Invalid token");
     }
 }
