@@ -5,17 +5,24 @@ export class Supabase {
     private constructor() {}
     public static getInstance(accessToken: string): SupabaseClient {
         if (!Supabase.instance) {
-            Supabase.instance = createClient(
-                Deno.env.get("SUPABASE_URL") ?? Deno.env.get("URL")!,
-                Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("KEY")!,
-                {
-                    global: {
-                        headers: {
-                            Authorization: `Bearer ${accessToken}`,
+            if (Deno.env.get("ENV") === "dev") {
+                Supabase.instance = createClient(
+                    Deno.env.get("SUPABASE_URL") ?? Deno.env.get("URL")!,
+                    Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("KEY")!,
+                );
+            } else {
+                Supabase.instance = createClient(
+                    Deno.env.get("SUPABASE_URL") ?? Deno.env.get("URL")!,
+                    Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("KEY")!,
+                    {
+                        global: {
+                            headers: {
+                                Authorization: `Bearer ${accessToken}`,
+                            },
                         },
                     },
-                },
-            );
+                );
+            }
         }
         return Supabase.instance;
     }

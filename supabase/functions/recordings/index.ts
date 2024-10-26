@@ -28,9 +28,18 @@ Deno.serve(async (req) => {
 
     switch (method) {
       case "GET": {
+        const { data: recording, error: recordingError } = await supabase
+          .from("recording")
+          .select("*")
+          .eq("meetingId", meetingId)
+          .single();
+
+        if (recordingError) {
+          return new Response(recordingError.message, { status: 500 });
+        }
         const file = await supabase.storage
           .from("recording")
-          .createSignedUrl(meetingId, 60);
+          .createSignedUrl(recording.name, 60);
         if (file.error) {
           return new Response(file.error.message, { status: 500 });
         }

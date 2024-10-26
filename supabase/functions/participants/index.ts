@@ -21,25 +21,24 @@ Deno.serve(async (req) => {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const user = await supabase.from("user")
+  const { data: userData, error: userError } = await supabase.from("user")
     .select("*")
     .eq(
       "tokenIdentifier",
       payload.sub,
     ).single();
-  if (user.error) {
-    return new Response(user.error.message, { status: 500 });
+  if (userError) {
+    return new Response(userError.message, { status: 500 });
   }
-
+  const id = req.url.split("/").pop();
   switch (method) {
     case "GET": {
-      const id = req.url.split("/").pop();
       if (id) {
         const { data, error } = await supabase
-          .from("participants")
+          .from("participant")
           .select("*")
           .eq("id", id)
-          .eq("userId", user.data.id)
+          .eq("userId", userData.id)
           .single();
         if (error) {
           return new Response(error.message, { status: 500 });
@@ -47,9 +46,9 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify(data), { status: 200 });
       } else {
         const { data, error } = await supabase
-          .from("participants")
+          .from("participant")
           .select("*")
-          .eq("userId", user.data.id)
+          .eq("userId", userData.id)
           .order("createdAt", { ascending: false });
 
         if (error) {
@@ -58,26 +57,37 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify(data), { status: 200 });
       }
     }
+    case "POST": {
+      const body = await req.json();
+      const { data, error } = await supabase.from("participant").insert([
+        {
+          ...body,
+          userId: userData.id,
+        },
+      ]);
+      if (error) {
+        return new Response(error.message, { status: 500 });
+      }
+      return new Response(JSON.stringify(data), { status: 200 });
+    }
     case "PUT": {
-      const id = req.url.split("/").pop();
       if (!id) {
         return new Response("Missing participant ID", { status: 400 });
       }
       const body = await req.json();
-      const { data, error } = await supabase.from("participants")
+      const { data, error } = await supabase.from("participant")
         .update(body)
-        .eq("id", id).eq("userId", user.data.id);
+        .eq("id", id).eq("userId", userData.id);
       if (error) {
         return new Response(error.message, { status: 500 });
       }
       return new Response(JSON.stringify(data), { status: 200 });
     }
     case "DELETE": {
-      const id = req.url.split("/").pop();
       if (!id) {
         return new Response("Missing participant ID", { status: 400 });
       }
-      const { data, error } = await supabase.from("participants").delete().eq(
+      const { data, error } = await supabase.from("participant").delete().eq(
         "id",
         id,
       );

@@ -11,20 +11,22 @@ Deno.serve(async (req) => {
 
     const token = authHeader.replace("Bearer ", "");
     const payload = await verifyToken(token);
+    console.log(payload);
     if (!payload) return new Response("Unauthorized", { status: 401 });
 
-    const user = await Supabase.getInstance(token)
-      .from("users")
-      .select("*")
-      .eq("id", payload.sub)
+    const {data:userData, error: userError} = await Supabase.getInstance(token)
+      .from("user")
+      .select("id")
+      .eq("tokenIdentifier", payload.sub)
       .single();
-    if (!user.data) return new Response("User not found", { status: 404 });
-    if (user.error) {
-      return new Response(`Error fetching user: ${user.error.message}`, {
+    
+    
+    if (userError) {
+      return new Response(`Error fetching user: ${userError.message}`, {
         status: 500,
       });
     }
-
+    
     const supabase = Supabase.getInstance(token);
     const method = req.method;
     const id = req.url.split("/").pop();
@@ -33,9 +35,10 @@ Deno.serve(async (req) => {
       case "GET": {
         if (id) {
           const { data, error } = await supabase
-            .from("meetings")
-            .select("*")
-            .eq("id", id)
+            .from("meeting")
+            .select("*, participant!inner(userId)")
+            .eq("participant.userId", userData.id)
+            .eq("participant.meetingId", id) 
             .single();
 
           if (error) {
@@ -49,9 +52,9 @@ Deno.serve(async (req) => {
         }
 
         const { data, error } = await supabase
-          .from("meetings")
-          .select("*, participants!inner(userId)")
-          .eq("participants.userId", user.data.user.id);
+          .from("meeting")
+          .select("*, participant!inner(userId)")
+          .eq("participant.userId", userData.id);
 
         if (error) {
           return new Response(`Error fetching meetings: ${error.message}`, {
@@ -74,33 +77,17 @@ Deno.serve(async (req) => {
             { status: 500 },
           );
         }
-        if (data.length === 0) {
-          return new Response("No meeting created", { status: 500 });
-        }
-
-        const meetingId = data[0].id;
-        const participant = await supabase
-          .from("participants")
-          .insert({ useId: user.data.id, meetingId: meetingId, status: "ACCEPT" });
-
-        if (participant.error) {
-          return new Response(
-            `Error adding participant: ${participant.error.message}`,
-            { status: 400 },
-          );
-        }
-
-        return new Response(JSON.stringify(data[0]), { status: 201 });
+        return new Response(JSON.stringify(data), { status: 201 });
       }
-      case "UPDATE": {
+      case "PUT": {
         if (!id) return new Response("Meeting ID required", { status: 400 });
 
         const body = await req.json();
         const { error } = await supabase
-          .from("meetings")
+          .from("meeting")
           .update(body)
           .eq("id", id)
-          .eq("userId", user.data.id);
+          .eq("userId", userData.id);
 
         if (error) {
           return new Response(`Error updating meeting: ${error.message}`, {
@@ -114,7 +101,7 @@ Deno.serve(async (req) => {
         if (!id) return new Response("Meeting ID required", { status: 400 });
 
         const { error } = await supabase
-          .from("meetings")
+          .from("meeting")
           .delete()
           .eq("id", id);
 

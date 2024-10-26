@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
     }
 
     const token = authHeader.replace("Bearer ", "");
-    const payload = await verifyToken(token);
+    const payload = decodeToken(token);
     if (!payload) return new Response("Unauthorized", { status: 401 });
 
     const user = await Supabase.getInstance(token)
@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
 
         // Fetch participants for the given meeting
         const { data: participants, error } = await supabase
-          .from("participants")
+          .from("participant")
           .select("*")
           .eq("meetingId", meetingId);
 
@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
 
         // If not, add the user to the meeting's participants
         const { data: _, error: joinError } = await supabase
-          .from("participants")
+          .from("participant")
           .insert({ meetingId, userId });
 
         if (joinError) {

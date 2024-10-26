@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
     switch (method) {
       case "GET": {
         const { data, error } = await supabase
-          .from("chat")
+          .from("note")
           .select("*")
           .eq("meetingId", meetingId);
         if (error) {
@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
       }
       case "POST": {
         const body = await req.json();
-        const { data, error } = await supabase.from("chats").insert([
+        const { data, error } = await supabase.from("note").insert([
           {
             ...body,
             userId: payload.sub,

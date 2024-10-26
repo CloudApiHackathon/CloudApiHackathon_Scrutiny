@@ -63,8 +63,12 @@ Deno.serve(async (req) => {
       }
       case "POST": {
         const body = await req.json();
-        const { data, error } = await supabase.from("user").insert(body);
+        const { data, error } = await supabase.from("user").insert({
+          ...body,
+          tokenIdentifier: payload.sub,
+        });
         if (error) {
+          console.error(error);
           return new Response(error.message, { status: 500 });
         }
         return new Response(JSON.stringify(data), { status: 200 });
