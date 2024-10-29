@@ -6,6 +6,7 @@ import { customAlphabet } from "nanoid";
 import Image from "next/image";
 import clsx from "clsx";
 import { AppContext, MEETING_ID_REGEX } from "@/contexts/AppProvider";
+import { API_KEY, CALL_TYPE } from "@/contexts/MeetProvider";
 import Button from "@/components/Button";
 import ButtonWithIcon from "@/components/ButtonWithIcon";
 import Header from "@/components/Header";
@@ -13,6 +14,12 @@ import KeyboardFilled from "@/components/icons/KeyboardFilled";
 import PlainButton from "@/components/PlainButton";
 import TextField from "@/components/TextField";
 import Videocall from "@/components/icons/Videocall";
+import {
+  ErrorFromResponse,
+  GetCallResponse,
+  StreamVideoClient,
+  User,
+} from "@stream-io/video-react-sdk";
 
 const generateMeetingId = () => {
   const alphabet = "abcdefghijklmnopqrstuvwxyz";
@@ -20,6 +27,8 @@ const generateMeetingId = () => {
 
   return `${nanoid(3)}-${nanoid(4)}-${nanoid(3)}`;
 };
+
+const GUEST_USER: User = { id: "guest", type: "guest" };
 
 const Home = () => {
   const { setNewMeeting } = useContext(AppContext);
@@ -49,6 +58,26 @@ const Home = () => {
   const handleCode = async () => {
     if (!MEETING_ID_REGEX.test(code)) return;
     setCheckingCode(true);
+    const client = new StreamVideoClient({
+      apiKey: API_KEY,
+      user: GUEST_USER,
+    });
+    const call = client.call(CALL_TYPE, code);
+    try {
+      const response: GetCallResponse = await call.get();
+      if (response.call) {
+        router.push(`/${code}`);
+        return;
+      }
+    } catch (e: unknown) {
+      const err = e as ErrorFromResponse<GetCallResponse>;
+      console.error(err.message);
+      if (err.status === 404) {
+        setError("Couldn't find the meeting you're trying to join.");
+      }
+    }
+
+    setCheckingCode(false);
   };
 
   return (
@@ -75,9 +104,16 @@ const Home = () => {
                 New meeting
               </ButtonWithIcon>
             )}
-            {!user && <Button size="md" onClick={()=>{
-              router.push("/api/auth/login");
-            }}>Sign in</Button>}
+            {!user && (
+              <Button
+                size="md"
+                onClick={() => {
+                  router.push("/api/auth/login");
+                }}
+              >
+                Sign in
+              </Button>
+            )}
             <div className="flex items-center gap-2 sm:ml-4">
               <TextField
                 label="Code or link"

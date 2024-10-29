@@ -10,8 +10,8 @@ import {
   StreamVideoClient,
   User,
 } from "@stream-io/video-react-sdk";
-// import { User as ChatUser, StreamChat } from "stream-chat";
-// import { Chat } from "stream-chat-react";
+import { User as ChatUser, StreamChat } from "stream-chat";
+import { Chat } from "stream-chat-react";
 import { getSupabase } from "@/utils/supabase";
 import LoadingOverlay from "../components/LoadingOverlay";
 import { RealtimeChannel } from "@supabase/supabase-js";
@@ -46,38 +46,44 @@ const MeetProvider = ({ meetingId, children }: MeetProviderProps) => {
   const { user: auth0User, isLoading } = useUser();
   const supabase = getSupabase();
   const channel = useRef<RealtimeChannel | null>(null);
-
+  const [chatClient, setChatClient] = useState<StreamChat>();
   const [loading, setLoading] = useState(true);
   const [videoClient, setVideoClient] = useState<StreamVideoClient>();
   const [call, setCall] = useState<Call>();
   const [messages, setMessages] = useState<any[]>([]);
 
-  useEffect(() => {
-    channel.current = supabase.channel(`meeting:${meetingId}`, {
-      config: {
-        broadcast: {
-          self: true,
-        },
-      },
-    });
+  // useEffect(() => {
+  //   channel.current = supabase.channel(`meeting:${meetingId}`, {
+  //     config: {
+  //       broadcast: {
+  //         self: true,
+  //       },
+  //     },
+  //   });
 
-    channel.current
-      .on("broadcast", { event: "message" }, ({ payload }) => {
-        setMessages((prev) => [...prev, payload.message]);
-      })
-      .subscribe();
+  //   channel.current
+  //     .on("broadcast", { event: "message" }, ({ payload }) => {
+  //       setMessages((prev) => [...prev, payload.message]);
+  //     })
+  //     .subscribe();
 
-    return () => {
-      channel.current?.unsubscribe();
-      channel.current = null;
-    };
-  }, [meetingId, supabase]);
+  //   return () => {
+  //     channel.current?.unsubscribe();
+  //     channel.current = null;
+  //   };
+  // }, [meetingId, supabase]);
 
   useEffect(() => {
     if (isLoading) return;
     const customProvider = async () => {
       const token = await tokenProvider(auth0User?.sid as string);
       return token;
+    };
+
+    const setUpChat = async (user: ChatUser) => {
+      await _chatClient.connectUser(user, customProvider);
+      setChatClient(_chatClient);
+      setLoading(false);
     };
 
     let user: User;
@@ -98,6 +104,7 @@ const MeetProvider = ({ meetingId, children }: MeetProviderProps) => {
       };
     }
 
+    const _chatClient = StreamChat.getInstance(API_KEY);
     const _videoClient = new StreamVideoClient({
       apiKey: API_KEY,
       user,
@@ -107,19 +114,22 @@ const MeetProvider = ({ meetingId, children }: MeetProviderProps) => {
 
     setVideoClient(_videoClient);
     setCall(call);
+    setUpChat(user);
 
     return () => {
       _videoClient.disconnectUser();
-      call.endCall();
+      _chatClient.disconnectUser();
     };
   }, [auth0User, isLoading, loading, meetingId]);
 
   if (loading) return <LoadingOverlay />;
 
   return (
-    <StreamVideo client={videoClient!}>
-      <StreamCall call={call}>{children}</StreamCall>
-    </StreamVideo>
+    <Chat client={chatClient!}>
+      <StreamVideo client={videoClient!}>
+        <StreamCall call={call}>{children}</StreamCall>
+      </StreamVideo>
+    </Chat>
   );
 };
 
