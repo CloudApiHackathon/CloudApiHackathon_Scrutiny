@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
 
         // Check if the user is already a participant in the meeting
         const existingParticipant = participants.find(
-          (participant) => participant.userId === userId,
+          (participant: any) => participant.userId === userId,
         );
 
         if (existingParticipant) {
