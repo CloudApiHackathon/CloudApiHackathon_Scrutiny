@@ -5,7 +5,6 @@ import { Supabase } from "../utils/supabase.ts";
 Deno.serve(async (req) => {
   try {
     const method = req.method;
-    console.log(method);
     switch (method) {
       case "POST": {
         const authHeader = req.headers.get("Authorization");

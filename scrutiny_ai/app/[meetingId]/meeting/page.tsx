@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import {
   CallingState,
   hasScreenShare,
@@ -17,7 +17,7 @@ import CallInfoButton from '@/components/CallInfoButton';
 import CallEndFilled from '@/components/icons/CallEndFilled';
 import Chat from '@/components/icons/Chat';
 import ChatFilled from '@/components/icons/ChatFilled';
-// import ChatPopup from '@/components/ChatPopup';
+import ChatPopup from '@/components/ChatPopup';
 import ClosedCaptions from '@/components/icons/ClosedCaptions';
 import GridLayout from '@/components/GridLayout';
 import Group from '@/components/icons/Group';
@@ -31,28 +31,26 @@ import SpeakerLayout from '@/components/SpeakerLayout';
 import ToggleAudioButton from '@/components/ToggleAudioButton';
 import ToggleVideoButton from '@/components/ToggleVideoButton';
 import useTime from '@/hooks/useTime';
+import { Channel } from "stream-chat";
+import { DefaultStreamChatGenerics, useChatContext } from "stream-chat-react";
 
-interface MeetingProps {
-  params: {
-    meetingId: string;
-  };
-}
 
-const Meeting = ({ params }: MeetingProps) => {
-  const { meetingId } = params;
+const Meeting = () => {
+  const { meetingId } = useParams();
   const audioRef = useRef<HTMLAudioElement>(null);
   const router = useRouter();
   const call = useCall();
   const user = useConnectedUser();
   const { currentTime } = useTime();
-  // const { client: chatClient } = useChatContext();
+  const { client: chatClient } = useChatContext();
   const { useCallCallingState, useParticipants, useScreenShareState } =
     useCallStateHooks();
   const participants = useParticipants();
   const { screenShare } = useScreenShareState();
   const callingState = useCallCallingState();
 
-    // useState<Channel<DefaultStreamChatGenerics>>();
+  const [chatChannel, setChatChannel] =
+    useState<Channel<DefaultStreamChatGenerics>>();
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isRecordingListOpen, setIsRecordingListOpen] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -63,15 +61,15 @@ const Meeting = ({ params }: MeetingProps) => {
     callingState === CallingState.UNKNOWN || callingState === CallingState.IDLE;
 
   useEffect(() => {
-    // const startup = async () => {
-    //   if (isUnkownOrIdle) {
-    //     router.push(`/${meetingId}`);
-    //   } else if (chatClient) {
-    //     const channel = chatClient.channel('messaging', meetingId);
-    //     setChatChannel(channel);
-    //   }
-    // };
-    // startup();
+    const startup = async () => {
+      if (isUnkownOrIdle) {
+        router.push(`/${meetingId}`);
+      } else if (chatClient) {
+        const channel = chatClient.channel('messaging', Array.isArray(meetingId) ? meetingId[0] : meetingId);
+        setChatChannel(channel);
+      }
+    };
+    startup();
   }, [router, meetingId, isUnkownOrIdle]);
 
   useEffect(() => {
@@ -178,11 +176,11 @@ const Meeting = ({ params }: MeetingProps) => {
             />
           </div>
         </div>
-        {/* <ChatPopup
+        <ChatPopup
           channel={chatChannel!}
           isOpen={isChatOpen}
           onClose={() => setIsChatOpen(false)}
-        /> */}
+        />
         {isCreator && <MeetingPopup />}
         <audio
           ref={audioRef}

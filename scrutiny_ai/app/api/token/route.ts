@@ -16,7 +16,6 @@ export async function POST(request: Request) {
   }
 
   const token = client.generateUserToken({ user_id: userId });
-  console.log(token);
 
   const response = {
     userId: userId,

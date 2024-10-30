@@ -31,7 +31,7 @@ const useAnimateVideoLayout = (isSpeakerLayout: boolean) => {
     (_, contextSafe) => {
       if (!ref.current) return;
 
-      let container = (
+      const container = (
         isSpeakerLayout
           ? ref.current!.querySelector(
               '.str-video__speaker-layout__participants-bar'
@@ -46,7 +46,7 @@ const useAnimateVideoLayout = (isSpeakerLayout: boolean) => {
           ref.current!.querySelectorAll('.str-video__participant-view')
         );
 
-        let layout = ref.current as HTMLElement;
+        const layout = ref.current as HTMLElement;
 
         items.forEach((item, index) => {
           const { left, top, width, height } = item.getBoundingClientRect();

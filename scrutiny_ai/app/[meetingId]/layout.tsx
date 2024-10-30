@@ -5,9 +5,6 @@ import MeetProvider from "@/contexts/MeetProvider";
 
 type LayoutProps = {
   children: ReactNode;
-  params: {
-    meetingId: string;
-  };
 };
 
 export default function Layout({ children }: LayoutProps) {

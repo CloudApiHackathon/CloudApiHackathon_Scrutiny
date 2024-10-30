@@ -159,16 +159,6 @@ const Home = () => {
             </div>
           </div>
         )}
-        <footer className="w-full max-w-xl mt-20 pb-4 text-start">
-          <div className="text-xs text-gray tracking-wider">
-            <span className="cursor-pointer">
-              <a className="text-meet-blue hover:underline" href="#">
-                Learn more
-              </a>{" "}
-              about Scrutiny
-            </span>
-          </div>
-        </footer>
       </main>
     </div>
   );

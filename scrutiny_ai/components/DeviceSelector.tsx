@@ -32,7 +32,7 @@ export const DeviceSelector = ({
   dark = false,
 }: DeviceSelectorProps) => {
   const label =
-    devices?.find((device) => device.deviceId === selectedDeviceId)?.label! ||
+    devices?.find((device) => device.deviceId === selectedDeviceId)?.label ||
     'Default - ...';
 
   return (
@@ -45,7 +45,7 @@ export const DeviceSelector = ({
         devices?.map((device) => ({
           label: device.label,
           value: device.deviceId,
-        }))!
+        })) || []
       }
       disabled={disabled}
       className={className}

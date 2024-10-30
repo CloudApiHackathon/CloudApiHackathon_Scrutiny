@@ -1,6 +1,6 @@
 "use client";
 import { useContext, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   CallingState,
   CallParticipantResponse,
@@ -22,16 +22,10 @@ import MeetingPreview from "@/components/MeetingPreview";
 import Spinner from "@/components/Spinner";
 import TextField from "@/components/TextField";
 
-interface LobbyProps {
-  params: {
-    meetingId: string;
-  };
-}
 
-const Lobby = ({ params }: LobbyProps) => {
-  console.log(params);
-  const { meetingId } = params;
-  const validMeetingId = MEETING_ID_REGEX.test(meetingId);
+const Lobby = () => {
+  const { meetingId } = useParams();
+  const validMeetingId = typeof meetingId === 'string' && MEETING_ID_REGEX.test(meetingId);
   const { newMeeting, setNewMeeting } = useContext(AppContext);
   const { user } = useUser();
   const router = useRouter();
@@ -173,7 +167,9 @@ const Lobby = ({ params }: LobbyProps) => {
     );
 
   if (errorFetchingMeeting) {
-    router.push(`/${meetingId}/meeting-end?invalid=true`);
+    console.error("Error fetching meeting");
+    console.log(errorFetchingMeeting);
+    // router.push(`/${meetingId}/meeting-end?invalid=true`);
   }
 
   return (
