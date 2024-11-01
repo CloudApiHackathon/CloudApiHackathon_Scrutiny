@@ -7,7 +7,6 @@ import Image from "next/image";
 import clsx from "clsx";
 import { AppContext, MEETING_ID_REGEX } from "@/contexts/AppProvider";
 import { API_KEY, CALL_TYPE } from "@/contexts/MeetProvider";
-import Button from "@/components/Button";
 import ButtonWithIcon from "@/components/ButtonWithIcon";
 import Header from "@/components/Header";
 import KeyboardFilled from "@/components/icons/KeyboardFilled";
@@ -20,13 +19,7 @@ import {
   StreamVideoClient,
   User,
 } from "@stream-io/video-react-sdk";
-
-const generateMeetingId = () => {
-  const alphabet = "abcdefghijklmnopqrstuvwxyz";
-  const nanoid = customAlphabet(alphabet, 4);
-
-  return `${nanoid(3)}-${nanoid(4)}-${nanoid(3)}`;
-};
+import axios from "axios";
 
 const GUEST_USER: User = { id: "guest", type: "guest" };
 
@@ -37,7 +30,6 @@ const Home = () => {
   const [checkingCode, setCheckingCode] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
-
   useEffect(() => {
     let timeout: NodeJS.Timeout;
     if (error) {
@@ -50,9 +42,37 @@ const Home = () => {
     };
   }, [error]);
 
-  const handleNewMeeting = () => {
+  const generateMeetingId = async () => {
+    const alphabet = "abcdefghijklmnopqrstuvwxyz";
+    const nanoid = customAlphabet(alphabet, 4);
+    const id = `${nanoid(3)}-${nanoid(4)}-${nanoid(3)}`;
+    console.log(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/meetings`);
+    try {
+      // await axios.post(
+      //   `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/meetings`,
+      //   {
+      //     title: "Instant meeting",
+      //     description: "Instant meeting",
+      //     status: "IDLE",
+      //     nanoid: id,
+      //   },
+      //   {
+      //     headers: {
+      //       Authorization: `Bearer ${user?.accessToken || ""}`,
+      //     },
+      //   }
+      // );
+      return id;
+    } catch (e) {
+      console.error(e);
+      return "";
+    }
+  };
+
+  const handleNewMeeting = async () => {
+    const id = await generateMeetingId();
     setNewMeeting(true);
-    router.push(`/${generateMeetingId()}`);
+    router.push(`/${id}`);
   };
 
   const handleCode = async () => {
@@ -91,42 +111,34 @@ const Home = () => {
       >
         <div className="w-full max-w-2xl p-4 pt-7 text-center inline-flex flex-col items-center basis-auto shrink-0">
           <h1 className="text-5xl tracking-normal text-black pb-2">
-            Video calls and meetings for everyone
+            Video Interviews for Developers
           </h1>
           <p className="text-1x text-gray pb-8">
-            Connect, collaborate, and celebrate from anywhere with Moogle Meet
+            Connect with your team and interview candidates remotely
           </p>
         </div>
         <div className="w-full max-w-xl flex justify-center">
           <div className="flex flex-col items-start sm:flex-row gap-6 sm:gap-2 sm:items-center justify-center">
             {user && (
-              <ButtonWithIcon onClick={handleNewMeeting} icon={<Videocall />}>
-                New meeting
-              </ButtonWithIcon>
+              <>
+                <ButtonWithIcon onClick={handleNewMeeting} icon={<Videocall />}>
+                  New meeting
+                </ButtonWithIcon>
+                <div className="flex items-center gap-2 sm:ml-4">
+                  <TextField
+                    label="Code or link"
+                    name="code"
+                    placeholder="Enter a code or link"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                    icon={<KeyboardFilled />}
+                  />
+                  <PlainButton onClick={handleCode} disabled={!code}>
+                    Join
+                  </PlainButton>
+                </div>
+              </>
             )}
-            {!user && (
-              <Button
-                size="md"
-                onClick={() => {
-                  router.push("/api/auth/login");
-                }}
-              >
-                Sign in
-              </Button>
-            )}
-            <div className="flex items-center gap-2 sm:ml-4">
-              <TextField
-                label="Code or link"
-                name="code"
-                placeholder="Enter a code or link"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                icon={<KeyboardFilled />}
-              />
-              <PlainButton onClick={handleCode} disabled={!code}>
-                Join
-              </PlainButton>
-            </div>
           </div>
         </div>
         <div className="w-full max-w-xl mx-auto border-b border-b-border-gray self-stretch mt-8 mb-20" />

@@ -15,6 +15,7 @@ body {
 
 @layer base {
   :root {
+    --meet-black: #202124;
     --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;
     --card: 0 0% 100%;
@@ -245,6 +246,7 @@ body {
   }
 
   .root-theme .str-video__composite-button .str-video__composite-button__button-group {
+    border-radius: 32px;
     @apply bg-dark-gray w-[2.5rem] h-[2.5rem];
 
     &:hover {
@@ -272,36 +274,26 @@ body {
   .material-symbols-outlined {
     font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
   }
+
+    .flashing-text {
+      animation: flash 2s ease-in-out infinite;
+    }
+  
+    @keyframes flash {
+  
+      0%,
+      100% {
+        opacity: 1;
+      }
+  
+      50% {
+        opacity: 0.5;
+      }
+    }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-
-  body {
-    @apply bg-background text-foreground;
-  }
-}
-
-.flashing-text {
-  animation: flash 2s ease-in-out infinite;
-}
-
-@keyframes flash {
-
-  0%,
-  100% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.5;
   }
 }

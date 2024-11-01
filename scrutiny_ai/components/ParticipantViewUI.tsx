@@ -83,7 +83,7 @@ const ParticipantViewUI = () => {
         </div>
       )}
       {!hasAudioTrack && (
-        <div className="absolute top-3.5 right-3.5 w-6.5 h-6.5 flex items-center justify-center bg-[#2021244d] rounded-full">
+        <div className="absolute top-4.5 right-3.5 w-6.5 h-6.5 flex items-center justify-center bg-[#2021244d] rounded-full">
           <MicOffFilled width={18} height={18} />
         </div>
       )}

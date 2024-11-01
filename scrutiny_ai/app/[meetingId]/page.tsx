@@ -21,11 +21,12 @@ import Header from "@/components/Header";
 import MeetingPreview from "@/components/MeetingPreview";
 import Spinner from "@/components/Spinner";
 import TextField from "@/components/TextField";
-
+import axios from "axios";
 
 const Lobby = () => {
   const { meetingId } = useParams();
-  const validMeetingId = typeof meetingId === 'string' && MEETING_ID_REGEX.test(meetingId);
+  const validMeetingId =
+    typeof meetingId === "string" && MEETING_ID_REGEX.test(meetingId);
   const { newMeeting, setNewMeeting } = useContext(AppContext);
   const { user } = useUser();
   const router = useRouter();
@@ -63,19 +64,55 @@ const Lobby = () => {
     };
 
     const createCall = async () => {
-      await call?.create({
-        data: {
-          members: [
-            {
-              user_id: connectedUser?.id as string,
-              role: "host",
+      try {
+        await call?.create({
+          data: {
+            members: [
+              {
+                user_id: connectedUser?.id as string,
+                role: "host",
+              },
+            ],
+          },
+        });
+        await axios.put(
+          process.env.NEXT_PUBLIC_API_GATEWAY_URL + "/meetings/" + meetingId,
+          {
+            nanoid: meetingId,
+            status: "ACTIVE",
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${user?.accessToken || ""}`,
             },
-          ],
-        },
-      });
+          }
+        );
+      } catch (e) {
+        console.error(e);
+      }
       setLoading(false);
     };
 
+    const updateParticipantStatus = async () => {
+      try {
+        await axios.put(
+          `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/participants`,
+          {
+            user_id: connectedUser?.id,
+            status: "ACTIVE",
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${user?.accessToken || ""}`,
+            },
+          }
+        );
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
+    updateParticipantStatus();
     if (!joining && validMeetingId) {
       leavePreviousCall();
       if (!connectedUser) return;

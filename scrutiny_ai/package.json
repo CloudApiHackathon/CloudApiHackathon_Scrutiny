@@ -20,6 +20,7 @@
     "@stream-io/video-react-sdk": "^1.7.2",
     "@supabase/supabase-js": "^2.45.6",
     "agora-react-uikit": "^1.2.0",
+    "axios": "^1.7.7",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "gsap": "^3.12.5",

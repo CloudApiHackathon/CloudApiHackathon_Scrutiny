@@ -6,7 +6,7 @@ import { CallingState, useCallStateHooks } from '@stream-io/video-react-sdk';
 
 import Button from '@/components/Button';
 import PlainButton from '@/components/PlainButton';
-
+import axios from 'axios';
 interface MeetingEndProps {
   params: {
     meetingId: string;
@@ -26,6 +26,16 @@ const MeetingEnd = ({ params, searchParams }: MeetingEndProps) => {
   const invalidMeeting = searchParams?.invalid === 'true';
 
   useEffect(() => {
+    const updateParticipantStatus = async () => {
+      try {
+        await axios.post(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/participants/${meetingId}`, {
+          status: 'left',
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    updateParticipantStatus();
     if (!invalidMeeting && callingState !== CallingState.LEFT) {
       router.push(`/`);
     }

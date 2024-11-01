@@ -64,7 +64,8 @@ const GridLayout = () => {
       ref={ref}
       className={clsx(
         'w-full relative overflow-hidden',
-        'str-video__paginated-grid-layout'
+        'str-video__paginated-grid-layout',
+        'mg-auto'
       )}
     >
       {pageCount > 1 && (

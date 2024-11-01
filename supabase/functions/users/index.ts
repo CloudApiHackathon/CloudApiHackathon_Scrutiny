@@ -63,10 +63,13 @@ Deno.serve(async (req) => {
       }
       case "POST": {
         const body = await req.json();
-        const { data, error } = await supabase.from("user").insert({
+        const { data, error } = await supabase.from("user").upsert({
           ...body,
           tokenIdentifier: payload.sub,
-        });
+        }).eq(
+          "tokenIdentifier",
+          payload.sub,
+        );
         if (error) {
           console.error(error);
           return new Response(error.message, { status: 500 });
@@ -85,7 +88,7 @@ Deno.serve(async (req) => {
           return new Response(userError.message, { status: 401 });
         }
         const body = await req.json();
-        const { data, error } = await supabase.from("user").update(body).eq(
+        const { data, error } = await supabase.from("user").upsert(body).eq(
           "id",
           userData.id,
         );

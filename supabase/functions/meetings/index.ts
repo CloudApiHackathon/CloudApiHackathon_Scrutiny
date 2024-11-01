@@ -14,19 +14,20 @@ Deno.serve(async (req) => {
     console.log(payload);
     if (!payload) return new Response("Unauthorized", { status: 401 });
 
-    const {data:userData, error: userError} = await Supabase.getInstance(token)
+    const { data: userData, error: userError } = await Supabase.getInstance(
+      token,
+    )
       .from("user")
       .select("id")
       .eq("tokenIdentifier", payload.sub)
       .single();
-    
-    
+
     if (userError) {
       return new Response(`Error fetching user: ${userError.message}`, {
         status: 500,
       });
     }
-    
+
     const supabase = Supabase.getInstance(token);
     const method = req.method;
     const id = req.url.split("/").pop();
@@ -38,7 +39,7 @@ Deno.serve(async (req) => {
             .from("meeting")
             .select("*, participant!inner(userId)")
             .eq("participant.userId", userData.id)
-            .eq("participant.meetingId", id) 
+            .eq("participant.meetingId", id)
             .single();
 
           if (error) {

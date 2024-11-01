@@ -20,7 +20,7 @@ const Header = ({ navItems = true }: HeaderProps) => {
     <header className="w-full px-4 pt-4 flex items-center justify-between bg-white">
       <div className="w-60 max-w-full flex items-center cursor-default">
         <a href="/#" className="flex items-center gap-2 w-full">
-          <Videocam width={40} height={40} color="var(--primary)" />
+          <Videocam width={40} height={40} color="var(--gray)" />
           <div className="font-product-sans text-2xl leading-6 text-meet-gray select-none">
             <span className="font-medium">Scrunity </span>
           </div>
@@ -54,14 +54,6 @@ const Header = ({ navItems = true }: HeaderProps) => {
           >
             {user ? (
               <>
-                {!navItems && (
-                  <div className="hidden sm:block mr-3 font-roboto leading-4 text-right text-meet-black">
-                    <div className="text-sm leading-4">{user.email}</div>
-                    <div className="text-sm hover:text-meet-blue cursor-pointer">
-                      Switch account
-                    </div>
-                  </div>
-                )}
                 <div className="relative h-9">
                   <UserButton user={user} />
                 </div>

@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
         const { data, error } = await supabase
           .from("participant")
           .select("*")
-          .eq("id", id)
+          .eq("meetingId", id)
           .eq("userId", userData.id)
           .single();
         if (error) {
@@ -72,12 +72,13 @@ Deno.serve(async (req) => {
     }
     case "PUT": {
       if (!id) {
-        return new Response("Missing participant ID", { status: 400 });
+        return new Response("Missing meeting ID", { status: 400 });
       }
       const body = await req.json();
       const { data, error } = await supabase.from("participant")
-        .update(body)
-        .eq("id", id).eq("userId", userData.id);
+        .upsert(body)
+        .eq("meetingId", id)
+        .eq("userId", userData.id);
       if (error) {
         return new Response(error.message, { status: 500 });
       }

@@ -1,6 +1,6 @@
-'use client';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+"use client";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   CallingState,
   hasScreenShare,
@@ -10,33 +10,39 @@ import {
   useCall,
   useCallStateHooks,
   useConnectedUser,
-} from '@stream-io/video-react-sdk';
-
-import CallControlButton from '@/components/CallControlButton';
-import CallInfoButton from '@/components/CallInfoButton';
-import CallEndFilled from '@/components/icons/CallEndFilled';
-import Chat from '@/components/icons/Chat';
-import ChatFilled from '@/components/icons/ChatFilled';
-import ChatPopup from '@/components/ChatPopup';
-import ClosedCaptions from '@/components/icons/ClosedCaptions';
-import GridLayout from '@/components/GridLayout';
-import Group from '@/components/icons/Group';
-import Info from '@/components/icons/Info';
-import Mood from '@/components/icons/Mood';
-import PresentToAll from '@/components/icons/PresentToAll';
-import MeetingPopup from '@/components/MeetingPopup';
-import MoreVert from '@/components/icons/MoreVert';
-import RecordingsPopup from '@/components/RecordingsPopup';
-import SpeakerLayout from '@/components/SpeakerLayout';
-import ToggleAudioButton from '@/components/ToggleAudioButton';
-import ToggleVideoButton from '@/components/ToggleVideoButton';
-import useTime from '@/hooks/useTime';
+} from "@stream-io/video-react-sdk";
 import { Channel } from "stream-chat";
 import { DefaultStreamChatGenerics, useChatContext } from "stream-chat-react";
 
+import CallControlButton from "@/components/CallControlButton";
+import CallInfoButton from "@/components/CallInfoButton";
+import CallEndFilled from "@/components/icons/CallEndFilled";
+import Chat from "@/components/icons/Chat";
+import ChatFilled from "@/components/icons/ChatFilled";
+import ChatPopup from "@/components/ChatPopup";
+import ClosedCaptions from "@/components/icons/ClosedCaptions";
+import GridLayout from "@/components/GridLayout";
+import Group from "@/components/icons/Group";
+import Info from "@/components/icons/Info";
+import Mood from "@/components/icons/Mood";
+import PresentToAll from "@/components/icons/PresentToAll";
+import MeetingPopup from "@/components/MeetingPopup";
+import MoreVert from "@/components/icons/MoreVert";
+import RecordingsPopup from "@/components/RecordingsPopup";
+import SpeakerLayout from "@/components/SpeakerLayout";
+import ToggleAudioButton from "@/components/ToggleAudioButton";
+import ToggleVideoButton from "@/components/ToggleVideoButton";
+import useTime from "@/hooks/useTime";
+import Record from "@/components/icons/Record";
 
-const Meeting = () => {
-  const { meetingId } = useParams();
+interface MeetingProps {
+  params: {
+    meetingId: string;
+  };
+}
+
+const Meeting = ({ params }: MeetingProps) => {
+  const { meetingId } = params;
   const audioRef = useRef<HTMLAudioElement>(null);
   const router = useRouter();
   const call = useCall();
@@ -53,7 +59,6 @@ const Meeting = () => {
     useState<Channel<DefaultStreamChatGenerics>>();
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isRecordingListOpen, setIsRecordingListOpen] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [participantInSpotlight, _] = participants;
   const [prevParticipantsCount, setPrevParticipantsCount] = useState(0);
   const isCreator = call?.state.createdBy?.id === user?.id;
@@ -65,12 +70,12 @@ const Meeting = () => {
       if (isUnkownOrIdle) {
         router.push(`/${meetingId}`);
       } else if (chatClient) {
-        const channel = chatClient.channel('messaging', Array.isArray(meetingId) ? meetingId[0] : meetingId);
+        const channel = chatClient.channel("messaging", meetingId);
         setChatChannel(channel);
       }
     };
     startup();
-  }, [router, meetingId, isUnkownOrIdle]);
+  }, [router, meetingId, isUnkownOrIdle, chatClient]);
 
   useEffect(() => {
     if (participants.length > prevParticipantsCount) {
@@ -102,6 +107,14 @@ const Meeting = () => {
     }
   };
 
+  const toggleRecord = async () => {
+    try {
+      await call?.startRecording();
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   const toggleChatPopup = () => {
     setIsChatOpen((prev) => !prev);
   };
@@ -122,7 +135,7 @@ const Meeting = () => {
           <div className="hidden sm:flex grow shrink basis-1/4 items-center text-start justify-start ml-3 truncate max-w-full">
             <div className="flex items-center overflow-hidden mx-3 h-20 gap-3 select-none">
               <span className="font-medium">{currentTime}</span>
-              <span>{'|'}</span>
+              <span>{"|"}</span>
               <span className="font-medium truncate">{meetingId}</span>
             </div>
           </div>
@@ -131,25 +144,20 @@ const Meeting = () => {
             <ToggleAudioButton />
             <ToggleVideoButton />
             <CallControlButton
-              icon={<ClosedCaptions />}
-              title={'Turn on captions'}
-            />
-            <CallControlButton
-              icon={<Mood />}
-              title={'Send a reaction'}
-              className="hidden sm:inline-flex"
-            />
-            <CallControlButton
               onClick={toggleScreenShare}
               icon={<PresentToAll />}
-              title={'Present now'}
+              title={"Present now"}
             />
-            <RecordCallButton />
+            <CallControlButton
+              icon={<Record />}
+              onClick={toggleRecord}
+              title={"Turn on captions"}
+            />
             <div className="hidden sm:block relative">
               <CallControlButton
                 onClick={toggleRecordingsList}
                 icon={<MoreVert />}
-                title={'View recording list'}
+                title={"View recording list"}
               />
               <RecordingsPopup
                 isOpen={isRecordingListOpen}
@@ -159,7 +167,7 @@ const Meeting = () => {
             <CallControlButton
               onClick={leaveCall}
               icon={<CallEndFilled />}
-              title={'Leave call'}
+              title={"Leave call"}
               className="leave-call-button"
             />
           </div>
