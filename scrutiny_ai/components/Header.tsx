@@ -154,7 +154,6 @@ const Header = ({ navItems = true }: HeaderProps) => {
         </a>
         <PlainButton
           size="sm"
-          className="text-lg leading-4.5 text-meet-gray"
           onClick={() => {
             router.push("/dashboard");
           }}

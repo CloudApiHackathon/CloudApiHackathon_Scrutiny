@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useEffect, useState } from "react";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import Header from "@/components/Header";
-import { Calendar } from "@nextui-org/calendar";
+import { Calendar } from "@/components/ui/calendar";
 import clsx from "clsx";
 import axios from "axios";
 import MeetingCard from "@/components/MeetingCard";
@@ -19,9 +20,8 @@ const Page = () => {
     status: string;
     created_at: string;
   }
-  
-  const [meetings, setMeetings] = useState<Meeting[]>([]);
 
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
 
   useEffect(() => {
     const fetchParticipants = async () => {
@@ -61,7 +61,9 @@ const Page = () => {
         const meetingsData = meetingResponses.map((response) => response.data);
 
         // Update the state with all meetings at once
-        setMeetings(meetingsData.filter((meeting: any) => meeting.status !== "END"));
+        setMeetings(
+          meetingsData.filter((meeting: any) => meeting.status !== "END")
+        );
       } catch (error) {
         console.error(error);
       } finally {
@@ -84,7 +86,7 @@ const Page = () => {
           className="mt-5 w-64 h-screen bg-white shadow-lg rounded-xl p-4 text-gray-700 shadow-blue-gray-900/5 hidden sm:block"
         >
           <ul className="space-y-2 font-medium">
-            <li>
+            <li className="hover:bg-blue">
               <a
                 href="/dashboard"
                 className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
