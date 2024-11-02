@@ -14,7 +14,10 @@ const Page = () => {
   const [isMeetingLoading, setIsMeetingLoading] = useState(true);
   interface Meeting {
     id: string;
-    // Add other properties of a meeting here
+    title: string;
+    description: string;
+    status: string;
+    created_at: string;
   }
   
   const [meetings, setMeetings] = useState<Meeting[]>([]);

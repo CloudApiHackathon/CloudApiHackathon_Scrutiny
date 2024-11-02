@@ -7,18 +7,20 @@ import useTime from "../hooks/useTime";
 import UserButton from "./UserButton";
 import { useRouter } from "next/navigation";
 import IconButton from "./IconButton";
+import { Button } from "@/components/ui/button";
 import Settings from "./icons/Settings";
 import Notification from "./icons/Notification";
 import { getSupabase } from "@/utils/supabase";
 import NotificationActive from "./icons/NotificationActive";
-
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@radix-ui/react-dropdown-menu";
+} from "@/components/ui/dropdown-menu";
+import Mail from "./icons/Mail";
 
 interface HeaderProps {
   navItems?: boolean;
@@ -27,7 +29,11 @@ interface HeaderProps {
 const Header = ({ navItems = true }: HeaderProps) => {
   const { isLoading, user } = useUser();
   const { currentDateTime } = useTime();
-  const [notification, setNotification] = useState([]);
+  interface Notification {
+    [key: string]: any;
+  }
+  
+  const [notification, setNotification] = useState<Notification[]>([]);
   const [hasNewNotifications, setHasNewNotifications] = useState(false);
 
   const router = useRouter();
@@ -66,11 +72,27 @@ const Header = ({ navItems = true }: HeaderProps) => {
                 old: oldParticipant,
               } = payload;
               setHasNewNotifications(true);
-              console.log("Participant Subscription", {
-                eventType,
-                newParticipant,
-                oldParticipant,
-              });
+              switch (eventType) {
+                case "INSERT":
+                  setNotification((prev) => [...prev, {
+                    type: "participant",
+                    content: "You have been added to a meeting"
+                  }]);
+                  break;
+                case "UPDATE":
+                  setNotification((prev) => [...prev, {
+                    type: "participant",
+                    content: "Your participant's status has been updated"
+                  }]);
+                  break;
+                case "DELETE":
+                  setNotification((prev) => [...prev, {
+                    type: "participant",
+                    content: "You have been removed from a meeting"
+                  }]);
+                default:
+                  break;
+              }
             }
           )
           .subscribe();
@@ -88,11 +110,27 @@ const Header = ({ navItems = true }: HeaderProps) => {
             (payload) => {
               const { eventType, new: newMeeting, old: oldMeeting } = payload;
               setHasNewNotifications(true);
-              console.log("Meeting Subscription", {
-                eventType,
-                newMeeting,
-                oldMeeting,
-              });
+              switch (eventType) {
+                case "INSERT":
+                  setNotification((prev) => [...prev, {
+                    type: "meeting",
+                    content: "You have been added to a meeting"
+                  }]);
+                  break;
+                case "UPDATE":
+                  setNotification((prev) => [...prev, {
+                    type: "meeting",
+                    content: "Meeting details have been updated"
+                  }]);
+                  break;
+                case "DELETE":
+                  setNotification((prev) => [...prev, {
+                    type: "meeting",
+                    content: "You have been removed from a meeting"
+                  }]);
+                default:
+                  break;
+              }
             }
           )
           .subscribe();
@@ -134,49 +172,41 @@ const Header = ({ navItems = true }: HeaderProps) => {
               <IconButton title="Settings" icon={<Settings />} />
             </div>
             <div className="hidden sm:contents [&>button]:mx-2.5 relative">
-              {hasNewNotifications ? (
-                <IconButton
-                  className="relative h-8 w-8 rounded-full"
-                  title="Settings"
-                  icon={<NotificationActive />}
-                  onClick={() => {
-                    setHasNewNotifications(false);
-                  }}
-                />
-              ) : (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <IconButton
-                      className="relative h-8 w-8 rounded-full"
-                      title="Settings"
-                      icon={<Notification />}
-                      onClick={() => {
-                        setHasNewNotifications(false);
-                      }}
-                    />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56" align="end" forceMount>
-                    <DropdownMenuLabel className="font-normal">
-                      <div className="flex gap-3">
-                        <div className="flex flex-col space-y-1">
-                          <p className="text-sm font-medium leading-none">
-                            Notifications
-                          </p>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="relative h-8 w-8 rounded-full"
+                    onClick={() => setHasNewNotifications(false)}
+                  >
+                    {hasNewNotifications ? (
+                      <NotificationActive />
+                    ) : (
+                      <Notification />
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  {hasNewNotifications ? (
+                    <DropdownMenuItem>
+                      {notification.map((n, i) => (
+                        <div key={i} className="flex gap-2 items-center">
+                          <span className="inline-block w-2 h-2 bg-red-500 rounded-full"></span>
+                          {n.content}
                         </div>
+                      ))}
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex gap-2 items-center">
+                        <Mail />
+                        No new notifications
                       </div>
                     </DropdownMenuLabel>
-                    <DropdownMenuItem>
-                      <a
-                        href="/notifications"
-                        className="flex gap-2 items-center"
-                      >
-                        <Notification />
-                        View All
-                      </a>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </>
         )}

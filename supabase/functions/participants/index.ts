@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
           .from("participant")
           .select("*")
           .eq("userId", userData.id)
-          .order("createdAt", { ascending: false });
+          .order("created_at", { ascending: false });
 
         if (error) {
           return new Response(error.message, { status: 500 });

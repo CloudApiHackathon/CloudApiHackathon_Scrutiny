@@ -19,13 +19,34 @@ import {
   StreamVideoClient,
   User,
 } from "@stream-io/video-react-sdk";
+import { Button } from "@/components/ui/button";
 import axios from "axios";
+import {
+  DropdownMenu,
+  DropdownMenuSeparator,
+} from "@radix-ui/react-dropdown-menu";
+import {
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import Url from "@/components/icons/Url";
+import Plus from "@/components/icons/Plus";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const GUEST_USER: User = { id: "guest", type: "guest" };
 
 const Home = () => {
   const { setNewMeeting } = useContext(AppContext);
   const { user, isLoading } = useUser();
+  const [isOpen, setIsOpen] = useState(false);
   const [code, setCode] = useState("");
   const [checkingCode, setCheckingCode] = useState(false);
   const [error, setError] = useState("");
@@ -64,11 +85,21 @@ const Home = () => {
     return id;
   };
 
-  const handleNewMeeting = async () => {
+  const handleInstantMeeting = async () => {
     try {
       const id = await generateMeetingId();
       setNewMeeting(true);
       router.push(`/${id}`);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleLaterMeeting = async () => {
+    try {
+      const id = await generateMeetingId();
+      setCode(id);
+      setIsOpen(true);
     } catch (e) {
       console.error(e);
     }
@@ -120,9 +151,33 @@ const Home = () => {
           <div className="flex flex-col items-start sm:flex-row gap-6 sm:gap-2 sm:items-center justify-center">
             {user && (
               <>
-                <ButtonWithIcon onClick={handleNewMeeting} icon={<Videocall />}>
-                  New meeting
-                </ButtonWithIcon>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      // onClick={handleNewMeeting}
+                      style={{
+                        height: "3rem",
+                      }}
+                    >
+                      <Videocall /> New meeting
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <DropdownMenuItem onClick={handleLaterMeeting}>
+                      <div className="flex gap-2 items-center">
+                        <Url />
+                        Create meeting for later
+                      </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleInstantMeeting}>
+                      <div className="flex gap-2 items-center">
+                        <Plus />
+                        Create instant meeting
+                      </div>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <div className="flex items-center gap-2 sm:ml-4">
                   <TextField
                     label="Code or link"
@@ -171,6 +226,31 @@ const Home = () => {
           </div>
         )}
       </main>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Your Invitation Link</DialogTitle>
+            <DialogDescription>
+              Share this link with your team to schedule a meeting later
+              <div className="flex flex-col items-center justify-center gap-2 sm:ml-4">
+                <div className="p-4 bg-gray-900 text-gray-100 rounded-md w-full max-w-lg font-mono text-sm overflow-auto">
+                  <code className="block whitespace-pre-wrap break-words text-center">
+                    {code}
+                  </code>
+                </div>
+                <Button 
+                className="bg-blue-600 text-white rounded-md px-3 py-1 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-50"
+                onClick={()=> {
+                  navigator.clipboard.writeText(code);
+                }}
+                >
+                  Copy
+                </Button>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
