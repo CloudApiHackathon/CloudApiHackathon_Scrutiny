@@ -46,33 +46,32 @@ const Home = () => {
     const alphabet = "abcdefghijklmnopqrstuvwxyz";
     const nanoid = customAlphabet(alphabet, 4);
     const id = `${nanoid(3)}-${nanoid(4)}-${nanoid(3)}`;
-    console.log(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/meetings`);
-    try {
-      // await axios.post(
-      //   `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/meetings`,
-      //   {
-      //     title: "Instant meeting",
-      //     description: "Instant meeting",
-      //     status: "IDLE",
-      //     nanoid: id,
-      //   },
-      //   {
-      //     headers: {
-      //       Authorization: `Bearer ${user?.accessToken || ""}`,
-      //     },
-      //   }
-      // );
-      return id;
-    } catch (e) {
-      console.error(e);
-      return "";
-    }
+
+    await axios.post(
+      `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/meetings`,
+      {
+        title: "Instant meeting",
+        description: "Instant meeting",
+        status: "IDLE",
+        nanoid: id,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${user?.accessToken || ""}`,
+        },
+      }
+    );
+    return id;
   };
 
   const handleNewMeeting = async () => {
-    const id = await generateMeetingId();
-    setNewMeeting(true);
-    router.push(`/${id}`);
+    try {
+      const id = await generateMeetingId();
+      setNewMeeting(true);
+      router.push(`/${id}`);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const handleCode = async () => {

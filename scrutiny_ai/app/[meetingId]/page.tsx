@@ -76,10 +76,12 @@ const Lobby = () => {
           },
         });
         await axios.put(
-          process.env.NEXT_PUBLIC_API_GATEWAY_URL + "/meetings/" + meetingId,
+          `${
+            process.env.NEXT_PUBLIC_API_GATEWAY_URL || ""
+          }/meetings/${meetingId}`,
           {
             nanoid: meetingId,
-            status: "ACTIVE",
+            status: "LIVE",
           },
           {
             headers: {
@@ -96,10 +98,9 @@ const Lobby = () => {
     const updateParticipantStatus = async () => {
       try {
         await axios.put(
-          `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/participants`,
+          `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/participants/${meetingId}`,
           {
-            user_id: connectedUser?.id,
-            status: "ACTIVE",
+            status: "STAND_BY",
           },
           {
             headers: {

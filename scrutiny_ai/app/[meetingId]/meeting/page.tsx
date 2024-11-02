@@ -5,7 +5,6 @@ import {
   CallingState,
   hasScreenShare,
   isPinned,
-  RecordCallButton,
   StreamTheme,
   useCall,
   useCallStateHooks,
@@ -20,11 +19,9 @@ import CallEndFilled from "@/components/icons/CallEndFilled";
 import Chat from "@/components/icons/Chat";
 import ChatFilled from "@/components/icons/ChatFilled";
 import ChatPopup from "@/components/ChatPopup";
-import ClosedCaptions from "@/components/icons/ClosedCaptions";
 import GridLayout from "@/components/GridLayout";
 import Group from "@/components/icons/Group";
 import Info from "@/components/icons/Info";
-import Mood from "@/components/icons/Mood";
 import PresentToAll from "@/components/icons/PresentToAll";
 import MeetingPopup from "@/components/MeetingPopup";
 import MoreVert from "@/components/icons/MoreVert";

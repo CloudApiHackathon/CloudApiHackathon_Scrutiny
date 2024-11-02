@@ -1,12 +1,13 @@
-'use client';
-import { useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { CallingState, useCallStateHooks } from '@stream-io/video-react-sdk';
+"use client";
+import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { CallingState, useCallStateHooks } from "@stream-io/video-react-sdk";
 
-import Button from '@/components/Button';
-import PlainButton from '@/components/PlainButton';
-import axios from 'axios';
+import Button from "@/components/Button";
+import PlainButton from "@/components/PlainButton";
+import axios from "axios";
+import { useUser } from "@auth0/nextjs-auth0/client";
 interface MeetingEndProps {
   params: {
     meetingId: string;
@@ -18,19 +19,28 @@ interface MeetingEndProps {
 
 const MeetingEnd = ({ params, searchParams }: MeetingEndProps) => {
   const { meetingId } = params;
+  const { user } = useUser();
   const router = useRouter();
   const { useCallCallingState } = useCallStateHooks();
   const callingState = useCallCallingState();
   const audioRef = useRef<HTMLAudioElement>(null);
   const [countdownNumber, setCountdownNumber] = useState(60);
-  const invalidMeeting = searchParams?.invalid === 'true';
+  const invalidMeeting = searchParams?.invalid === "true";
 
   useEffect(() => {
     const updateParticipantStatus = async () => {
       try {
-        await axios.post(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/participants/${meetingId}`, {
-          status: 'left',
-        });
+        await axios.post(
+          `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/participants/${meetingId}`,
+          {
+            status: "LEAVE",
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${user?.accessToken || ""}`,
+            },
+          }
+        );
       } catch (e) {
         console.error(e);
       }
@@ -60,7 +70,7 @@ const MeetingEnd = ({ params, searchParams }: MeetingEndProps) => {
   };
 
   const returnHome = () => {
-    router.push('/');
+    router.push("/");
   };
 
   if (!invalidMeeting && callingState !== CallingState.LEFT) return null;
@@ -74,7 +84,7 @@ const MeetingEnd = ({ params, searchParams }: MeetingEndProps) => {
           </div>
           <svg
             style={{
-              transform: 'rotateY(-180deg) rotateZ(-90deg)',
+              transform: "rotateY(-180deg) rotateZ(-90deg)",
             }}
             className="absolute -top-[32px] -right-[12px] w-[100px] h-[100px]"
           >
@@ -97,13 +107,13 @@ const MeetingEnd = ({ params, searchParams }: MeetingEndProps) => {
       </div>
       <div className="mt-6 px-4 flex flex-col items-center gap-8">
         <h1 className="text-4xl leading-[2.75rem] font-normal text-dark-gray tracking-normal">
-          {invalidMeeting ? 'Check your meeting code' : 'You left the meeting'}
+          {invalidMeeting ? "Check your meeting code" : "You left the meeting"}
         </h1>
         {invalidMeeting && (
           <div className="font-roboto text-base text-meet-gray text-center">
             <p>
               Make sure you entered the correct meeting code in the URL, for
-              example:{' '}
+              example:{" "}
             </p>
             <p>
               https://{window.location.host}/

@@ -74,10 +74,26 @@ Deno.serve(async (req) => {
       if (!id) {
         return new Response("Missing meeting ID", { status: 400 });
       }
+      const { data: meetingData, error: meetingError } = await supabase.from(
+        "meeting",
+      )
+        .select("*")
+        .eq("nanoid", id)
+        .single();
+      if (meetingError) {
+        return new Response(meetingError.message, { status: 500 });
+      }
       const body = await req.json();
+      console.log("userId", userData.id);
+      console.log("meetingId", meetingData.id);
+      console.log("body", body);
       const { data, error } = await supabase.from("participant")
-        .upsert(body)
-        .eq("meetingId", id)
+        .upsert({
+          ...body,
+          userId: userData.id,
+          meetingId: meetingData.id,
+        })
+        .eq("meetingId", meetingData.id)
         .eq("userId", userData.id);
       if (error) {
         return new Response(error.message, { status: 500 });

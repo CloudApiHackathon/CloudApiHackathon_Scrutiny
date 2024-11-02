@@ -62,6 +62,15 @@ Deno.serve(async (req) => {
         }
       }
       case "POST": {
+        const { data: userData, error: userError } = await supabase.from("user")
+          .select("*")
+          .eq(
+            "tokenIdentifier",
+            payload.sub,
+          ).single();
+        if (userData) {
+          return new Response(JSON.stringify(userData), { status: 200 });
+        }
         const body = await req.json();
         const { data, error } = await supabase.from("user").upsert({
           ...body,
@@ -71,7 +80,6 @@ Deno.serve(async (req) => {
           payload.sub,
         );
         if (error) {
-          console.error(error);
           return new Response(error.message, { status: 500 });
         }
         return new Response(JSON.stringify(data), { status: 200 });
