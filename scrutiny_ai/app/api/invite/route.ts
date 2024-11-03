@@ -23,7 +23,7 @@ export async function POST(req: NextApiRequest): Promise<Response> {
 
         const results = await Promise.all(
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            emailPromises.map((p: Promise<any>) => p.catch((e: any) => e)),
+            emailPromises.map((p: Promise<any>) => p.catch((e: any) => console.error(e))),
         ); // Handle errors for each promise
 
         for (const result of results) {
