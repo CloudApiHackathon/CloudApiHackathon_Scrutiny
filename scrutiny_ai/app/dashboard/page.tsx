@@ -2,7 +2,7 @@
 "use client";
 import { useContext, useEffect, useState } from "react";
 import { useUser } from "@auth0/nextjs-auth0/client";
-import { useForm, FormProvider } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
@@ -22,16 +22,16 @@ import Url from "@/components/icons/Url";
 import { CalendarIcon, Copy } from "lucide-react";
 import {
   DropdownMenu,
-  DropdownMenuTrigger,
+  DropdownMenuSeparator,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
-} from "@radix-ui/react-dropdown-menu";
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Popover,
-  PopoverTrigger,
   PopoverContent,
-} from "@radix-ui/react-popover";
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Dialog,
   DialogContent,
@@ -46,11 +46,14 @@ import {
   FormControl,
   FormDescription,
   FormMessage,
+  Form,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
 // Contexts
 import { AppContext } from "@/contexts/AppProvider";
+import { Badge } from "@/components/ui/badge";
+import { Cross1Icon, ReloadIcon } from "@radix-ui/react-icons";
 
 // Interfaces
 interface Meeting {
@@ -77,8 +80,10 @@ const Page = () => {
   const [isMeetingLoading, setIsMeetingLoading] = useState(true);
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [isCreatingNewMeeting, setIsCreatingNewMeeting] = useState(false);
   const [code, setCode] = useState("");
   const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [emails, setEmails] = useState<string[]>([]);
 
   // Form
   const form = useForm<z.infer<typeof formSchema>>({
@@ -88,7 +93,7 @@ const Page = () => {
       description: "",
       date: undefined,
       participants: [],
-    }
+    },
   });
 
   // Functions
@@ -104,26 +109,54 @@ const Page = () => {
   };
 
   const createMeeting = async (id: string, title: string, status: string) => {
-    await axios.post(
-      `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/meetings/`,
-      {
-        title,
-        description: title,
-        status,
-        nanoid: id,
-        date: form.getValues("date") || "",
-      },
-      {
-        headers: { Authorization: `Bearer ${user?.accessToken || ""}` },
-      }
+    try {
+      await axios.post(
+        `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/meetings/`,
+        {
+          title,
+          description: title,
+          status,
+          nanoid: id,
+          // date: form.getValues("date") || "",
+        },
+        {
+          headers: { Authorization: `Bearer ${user?.accessToken || ""}` },
+        }
+      );
+    } catch (e) {
+      console.error("Error creating meeting:", e);
+    } finally {
+      setIsCreatingNewMeeting(false);
+    }
+  };
+
+  const handleDelete = (emailToDelete: string) => {
+    setEmails((prevEmails) =>
+      prevEmails.filter((email) => email !== emailToDelete)
     );
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && e.currentTarget.value) {
+      const newEmail = e.currentTarget.value.trim();
+      if (newEmail && !emails.includes(newEmail)) {
+        setEmails((prevEmails) => [...prevEmails, newEmail]);
+        e.currentTarget.value = ""; // Clear input after adding
+      }
+    }
+  };
+
   const handleInstantMeeting = async () => {
-    const id = await generateMeetingId();
-    if (id) {
-      setNewMeeting(true);
-      router.push(`/${id}`);
+    try {
+      const id = await generateMeetingId();
+      if (id) {
+        setNewMeeting(true);
+        router.push(`/${id}`);
+      }
+    } catch (e) {
+      console.error("Error creating instant meeting:", e);
+    } finally {
+      setNewMeeting(false);
     }
   };
 
@@ -137,14 +170,17 @@ const Page = () => {
 
   const onSubmit = async (data: { title: any }) => {
     try {
+      setIsCreatingNewMeeting(true);
       await createMeeting(
         customAlphabet("abcdefghijklmnopqrstuvwxyz", 4)(),
         data.title,
-        "SCHEDULED"
+        "IDLE"
       );
       setIsScheduleOpen(false);
     } catch (e) {
       console.error("Error scheduling meeting:", e);
+    } finally {
+      setIsCreatingNewMeeting(false);
     }
   };
 
@@ -235,7 +271,7 @@ const Page = () => {
           {/* Sidebar */}
           <div className="w-1/4 p-4 flex justify-center mt-10">
             <Calendar
-            selected={new Date()}
+              selected={new Date()}
               mode="single"
               style={{
                 borderRadius: "1rem",
@@ -250,10 +286,7 @@ const Page = () => {
       {/* Dropdown for Meeting Options */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            size="icon"
-            className="fixed bottom-4 right-4"
-          >
+          <Button size="icon" className="fixed bottom-4 right-4">
             <Plus />
           </Button>
         </DropdownMenuTrigger>
@@ -265,6 +298,7 @@ const Page = () => {
           <DropdownMenuItem onClick={handleInstantMeeting}>
             <Plus /> Create instant meeting
           </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => setIsScheduleOpen(true)}>
             <CalendarIcon /> Schedule meeting
           </DropdownMenuItem>
@@ -294,86 +328,121 @@ const Page = () => {
       <Dialog open={isScheduleOpen} onOpenChange={setIsScheduleOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Schedule your meeting</DialogTitle>
+            <DialogTitle>Schedule Meeting</DialogTitle>
             <DialogDescription>
-              Fill in the details below to schedule your meeting
+              Set up a meeting in advance and invite participants
             </DialogDescription>
-            <FormProvider {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-4"
-              >
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Title</FormLabel>
-                      <FormControl>
-                        <Input placeholder="An upcoming interview" {...field} />
-                      </FormControl>
-                      <FormDescription>Enter a title</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Meeting description" {...field} />
-                      </FormControl>
-                      <FormDescription>Enter a description</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="date"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              className={clsx(
-                                "w-[240px] pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value
-                                ? format(field.value, "PPP")
-                                : "Pick a date"}
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent align="start" className="p-0">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <Button type="submit" className="w-full">
-                  Schedule meeting
-                </Button>
-              </form>
-            </FormProvider>
           </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)}>
+              <FormField
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Title</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Meeting title" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Meeting description" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                name="date"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col mt-3">
+                    <FormLabel>Date</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            className="w-full pl-3 text-left"
+                          >
+                            {field.value
+                              ? format(field.value, "PPP")
+                              : "Pick a date"}
+                            <CalendarIcon className="ml-auto opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) => date < new Date()}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormDescription>
+                      Select a future date for the meeting
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                name="participants"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col mt-3">
+                    <FormLabel>Participants</FormLabel>
+                    <FormControl>
+                      <div className="flex flex-wrap gap-2">
+                        {emails.map((email, index) => (
+                          <Badge
+                            key={index}
+                            onClick={() => handleDelete(email)}
+                          >
+                            {email} <Cross1Icon className="h-3 w-3 ml-1" />
+                          </Badge>
+                        ))}
+                        <Input
+                          placeholder="Email addresses"
+                          {...field}
+                          value={field.value.join(", ")}
+                          onChange={(e) => {
+                            const newValue = e.target.value;
+                            field.onChange(
+                              newValue.split(", ").map((email) => email.trim())
+                            ); // Update field value
+                            setEmails(
+                              newValue.split(", ").map((email) => email.trim())
+                            ); // Update emails state
+                          }}
+                          onKeyDown={handleKeyDown}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormDescription>
+                      Separate multiple email addresses with commas
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" className="w-full mt-4">
+                {isCreatingNewMeeting ?? (
+                  <>
+                    <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+                  </>
+                )}
+                Schedule Meeting
+              </Button>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </div>

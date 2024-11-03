@@ -3,7 +3,7 @@ import clsx from "clsx";
 import { useRouter } from "next/navigation";
 
 interface Meeting {
-  id: any;
+  id: string;
   title: string;
   description: string;
   status: string;
@@ -17,8 +17,7 @@ const MeetingCard = ({
   meeting: Meeting;
   className?: string;
 }) => {
-    const router = useRouter();
-
+  const router = useRouter();
 
   const meetingCardBackground = () => {
     switch (meeting.status) {
@@ -31,7 +30,7 @@ const MeetingCard = ({
       default:
         return "bg-blue-100";
     }
-  }
+  };
 
   return (
     <Card
@@ -65,7 +64,18 @@ const MeetingCard = ({
       </CardHeader>
       <CardBody className="space-y-2">
         <p className="text-gray-600">{meeting.description}</p>
-        <p className="text-gray-500 text-sm">Date: {meeting.created_at}</p>
+        <p className="text-gray-500 text-sm">
+          Date:{" "}
+          {new Date(meeting.created_at).toLocaleString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            timeZone: "UTC", // Adjust if needed
+          })}
+        </p>
       </CardBody>
     </Card>
   );

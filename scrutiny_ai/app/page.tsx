@@ -23,8 +23,6 @@ import axios from "axios";
 import {
   DropdownMenu,
   DropdownMenuSeparator,
-} from "@radix-ui/react-dropdown-menu";
-import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
@@ -39,7 +37,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import Copy from "@/components/icons/Copy";
-import { CalendarIcon, Cross1Icon } from "@radix-ui/react-icons";
+import { CalendarIcon, Cross1Icon, ReloadIcon } from "@radix-ui/react-icons";
 
 import { z } from "zod";
 import {
@@ -81,6 +79,7 @@ const Home = () => {
   const [emails, setEmails] = useState<string[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [checkingCode, setCheckingCode] = useState(false);
+  const [isCreatingNewMeeting, setIsCreatingNewMeeting] = useState(false);
   const [error, setError] = useState("");
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -152,18 +151,32 @@ const Home = () => {
   };
 
   const handleInstantMeeting = async () => {
-    const id = await generateMeetingId();
-    if (id) {
-      setNewMeeting(true);
-      router.push(`/${id}`);
+    try {
+      setIsCreatingNewMeeting(true);
+      const id = await generateMeetingId();
+      if (id) {
+        setNewMeeting(true);
+        router.push(`/${id}`);
+      }
+    } catch (e) {
+      console.error("Error creating instant meeting:", e);
+    } finally {
+      setIsCreatingNewMeeting(false);
     }
   };
 
   const handleLaterMeeting = async () => {
-    const id = await generateMeetingId();
-    if (id) {
-      setCode(id);
-      setIsOpen(true);
+    try {
+      setIsCreatingNewMeeting(true);
+      const id = await generateMeetingId();
+      if (id) {
+        setCode(id);
+        setIsOpen(true);
+      }
+    } catch (e) {
+      console.error("Error creating later meeting:", e);
+    } finally {
+      setIsCreatingNewMeeting(false);
     }
   };
 
@@ -192,14 +205,30 @@ const Home = () => {
 
   const onSubmit = async (data: { title: string }) => {
     try {
+      setIsCreatingNewMeeting(true);
       await createMeeting(
         customAlphabet("abcdefghijklmnopqrstuvwxyz", 4)(),
         data.title,
-        "SCHEDULED"
+        "IDLE"
+      );
+      await axios.post(
+        "/api/invite",
+        {
+          title: data.title,
+          date: form.getValues("date"),
+          participants: emails,
+        },
+        {
+          headers: { Authorization: `Bearer ${user?.accessToken || ""}` },
+        }
       );
       setIsScheduleOpen(false);
     } catch (e) {
       console.error("Error scheduling meeting:", e);
+    } finally {
+      form.reset();
+      setEmails([]);
+      setIsCreatingNewMeeting(false);
     }
   };
 
@@ -240,8 +269,10 @@ const Home = () => {
                   <DropdownMenuItem onClick={handleInstantMeeting}>
                     <Plus /> Create instant meeting
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => setIsScheduleOpen(true)}>
-                    <CalendarIcon className="h-3 w-3 ml-1 mr-1"/> Schedule meeting
+                    <CalendarIcon className="h-3 w-3 ml-1 mr-1" /> Schedule
+                    meeting
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -415,6 +446,11 @@ const Home = () => {
                   )}
                 />
                 <Button type="submit" className="w-full mt-4">
+                  {isCreatingNewMeeting ?? (
+                    <>
+                      <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+                    </>
+                  )}
                   Schedule Meeting
                 </Button>
               </form>
