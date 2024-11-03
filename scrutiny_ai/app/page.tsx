@@ -39,7 +39,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import Copy from "@/components/icons/Copy";
-import { CalendarIcon } from "@radix-ui/react-icons";
+import { CalendarIcon, Cross1Icon } from "@radix-ui/react-icons";
 
 import { z } from "zod";
 import {
@@ -116,19 +116,23 @@ const Home = () => {
 
   // Create a new meeting
   const createMeeting = async (id: string, title: string, status: string) => {
-    await axios.post(
-      `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/meetings/`,
-      {
-        title,
-        description: title,
-        status,
-        nanoid: id,
-        // date: form.getValues("date") || "",
-      },
-      {
-        headers: { Authorization: `Bearer ${user?.accessToken || ""}` },
-      }
-    );
+    try {
+      await axios.post(
+        `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/meetings/`,
+        {
+          title,
+          description: title,
+          status,
+          nanoid: id,
+          // date: form.getValues("date") || "",
+        },
+        {
+          headers: { Authorization: `Bearer ${user?.accessToken || ""}` },
+        }
+      );
+    } catch (error) {
+      console.error("Error creating meeting:", error);
+    }
   };
 
   const handleDelete = (emailToDelete: string) => {
@@ -143,19 +147,6 @@ const Home = () => {
       if (newEmail && !emails.includes(newEmail)) {
         setEmails((prevEmails) => [...prevEmails, newEmail]);
         e.currentTarget.value = ""; // Clear input after adding
-      }
-    }
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    const lastChar = value.charAt(value.length - 1);
-    // If comma is pressed, add email
-    if (lastChar === ",") {
-      const newEmail = value.slice(0, -1).trim(); // Remove the comma
-      if (newEmail && !emails.includes(newEmail)) {
-        setEmails((prevEmails) => [...prevEmails, newEmail]);
-        e.target.value = ""; // Clear input after adding
       }
     }
   };
@@ -249,7 +240,7 @@ const Home = () => {
                     <Plus /> Create instant meeting
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setIsScheduleOpen(true)}>
-                    <CalendarIcon /> Schedule meeting
+                    <CalendarIcon className="h-3 w-3 ml-1 mr-1"/> Schedule meeting
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -391,7 +382,7 @@ const Home = () => {
                               key={index}
                               onClick={() => handleDelete(email)}
                             >
-                              {email}
+                              {email} <Cross1Icon className="h-3 w-3 ml-1" />
                             </Badge>
                           ))}
                           <Input

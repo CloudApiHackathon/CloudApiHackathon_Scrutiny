@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { CallingState, useCallStateHooks } from "@stream-io/video-react-sdk";
-import Button from "@/components/Button";
+import { Button } from "@/components/ui/button";
 import PlainButton from "@/components/PlainButton";
 import axios from "axios";
 import { useUser } from "@auth0/nextjs-auth0/client";
@@ -148,9 +148,9 @@ const MeetingEnd = ({ params, searchParams }: MeetingEndProps) => {
               </p>
             </div>
           </div>
-          <PlainButton size="sm" className="mt-2">
+          <Button variant="ghost" className="mt-2">
             Learn more
-          </PlainButton>
+          </Button>
         </div>
       </div>
 

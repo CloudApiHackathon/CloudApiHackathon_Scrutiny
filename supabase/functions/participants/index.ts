@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
     }
     case "POST": {
       const body = await req.json();
-      const { data, error } = await supabase.from("participant").insert([
+      const { data, error } = await supabase.from("participant").upsert([
         {
           ...body,
           userId: userData.id,
