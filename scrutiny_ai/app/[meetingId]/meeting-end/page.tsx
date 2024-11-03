@@ -3,11 +3,11 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { CallingState, useCallStateHooks } from "@stream-io/video-react-sdk";
-
 import Button from "@/components/Button";
 import PlainButton from "@/components/PlainButton";
 import axios from "axios";
 import { useUser } from "@auth0/nextjs-auth0/client";
+
 interface MeetingEndProps {
   params: {
     meetingId: string;
@@ -24,69 +24,58 @@ const MeetingEnd = ({ params, searchParams }: MeetingEndProps) => {
   const { useCallCallingState } = useCallStateHooks();
   const callingState = useCallCallingState();
   const audioRef = useRef<HTMLAudioElement>(null);
-  const [countdownNumber, setCountdownNumber] = useState(60);
-  const invalidMeeting = searchParams?.invalid === "true";
+  const [countdown, setCountdown] = useState(60);
+  const isInvalidMeeting = searchParams?.invalid === "true";
 
-  useEffect(() => {
-    const updateParticipantStatus = async () => {
-      try {
-        await axios.post(
-          `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/participants/${meetingId}`,
-          {
-            status: "LEAVE",
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${user?.accessToken || ""}`,
-            },
-          }
-        );
-      } catch (e) {
-        console.error(e);
-      }
-    };
-    updateParticipantStatus();
-    if (!invalidMeeting && callingState !== CallingState.LEFT) {
-      router.push(`/`);
+  // Function to update participant status
+  const updateParticipantStatus = async () => {
+    try {
+      await axios.post(
+        `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/participants/${meetingId}`,
+        { status: "LEAVE" },
+        { headers: { Authorization: `Bearer ${user?.accessToken || ""}` } }
+      );
+    } catch (error) {
+      console.error("Error updating participant status:", error);
     }
-    audioRef.current?.play();
-    setCountdownNumber(59);
+  };
 
-    const interval = setInterval(() => {
-      setCountdownNumber((prev) => (prev ? prev - 1 : 0));
+  // Initialize countdown and play audio
+  useEffect(() => {
+    if (!isInvalidMeeting && callingState !== CallingState.LEFT) {
+      router.push("/");
+      return;
+    }
+
+    updateParticipantStatus();
+    audioRef.current?.play();
+    setCountdown(59);
+
+    const intervalId = setInterval(() => {
+      setCountdown((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
 
-    return () => clearInterval(interval);
+    return () => clearInterval(intervalId);
   }, []);
 
+  // Redirect to home when countdown ends
   useEffect(() => {
-    if (countdownNumber === 0) {
-      returnHome();
-    }
-  }, [countdownNumber]);
+    if (countdown === 0) router.push("/");
+  }, [countdown]);
 
-  const rejoinMeeting = () => {
-    router.push(`/${meetingId}`);
-  };
-
-  const returnHome = () => {
-    router.push("/");
-  };
-
-  if (!invalidMeeting && callingState !== CallingState.LEFT) return null;
+  if (!isInvalidMeeting && callingState !== CallingState.LEFT) return null;
 
   return (
     <div className="w-full">
-      <div className="m-5 h-14 flex items-center justify-start gap-2">
-        <div className="relative w-14 h-14 p-2 flex items-center justify-center text-center">
-          <div className="text-meet-black font-normal text-sm font-roboto select-none">
-            {countdownNumber}
-          </div>
+      {/* Countdown Timer */}
+      <div className="m-5 h-14 flex items-center gap-2">
+        <div className="relative w-14 h-14 p-2 flex items-center justify-center">
+          <span className="text-meet-black font-roboto text-sm">
+            {countdown}
+          </span>
           <svg
-            style={{
-              transform: "rotateY(-180deg) rotateZ(-90deg)",
-            }}
-            className="absolute -top-[32px] -right-[12px] w-[100px] h-[100px]"
+            className="absolute w-24 h-24 animate-countdown"
+            style={{ transform: "rotateY(-180deg) rotateZ(-90deg)" }}
           >
             <circle
               r="18"
@@ -97,24 +86,23 @@ const MeetingEnd = ({ params, searchParams }: MeetingEndProps) => {
               strokeWidth={4}
               stroke="var(--primary)"
               fill="none"
-              className="animate-countdown"
-            ></circle>
+            />
           </svg>
         </div>
-        <span className="font-roboto text-sm tracking-loosest">
-          Returning to home screen
-        </span>
+        <span className="font-roboto text-sm">Returning to home screen</span>
       </div>
+
       <div className="mt-6 px-4 flex flex-col items-center gap-8">
-        <h1 className="text-4xl leading-[2.75rem] font-normal text-dark-gray tracking-normal">
-          {invalidMeeting ? "Check your meeting code" : "You left the meeting"}
+        {/* Main message */}
+        <h1 className="text-4xl font-normal text-dark-gray">
+          {isInvalidMeeting
+            ? "Check your meeting code"
+            : "You left the meeting"}
         </h1>
-        {invalidMeeting && (
+
+        {isInvalidMeeting && (
           <div className="font-roboto text-base text-meet-gray text-center">
-            <p>
-              Make sure you entered the correct meeting code in the URL, for
-              example:{" "}
-            </p>
+            <p>Ensure the meeting code is correct, e.g.:</p>
             <p>
               https://{window.location.host}/
               <span className="font-extrabold">xxx-yyyy-zzz</span>
@@ -124,24 +112,28 @@ const MeetingEnd = ({ params, searchParams }: MeetingEndProps) => {
             </p>
           </div>
         )}
-        <div className="flex flex-col items-center justify-center gap-3">
-          <div className="flex items-center justify-center gap-2">
-            {!invalidMeeting && (
-              <PlainButton
-                size="sm"
-                className="border border-hairline-gray px-[23px] shadow-[border_.28s_cubic-bezier(.4,0,.2,1),box-shadow_.28s_cubic-bezier(.4,0,.2,1)]"
-                onClick={rejoinMeeting}
-              >
-                Rejoin
-              </PlainButton>
-            )}
-            <Button size="sm" onClick={returnHome}>
-              Return to home screen
-            </Button>
-          </div>
-          <PlainButton size="sm">Submit feedback</PlainButton>
+
+        {/* Action buttons */}
+        <div className="flex items-center gap-2">
+          {!isInvalidMeeting && (
+            <PlainButton
+              size="sm"
+              className="border px-6"
+              onClick={() => router.push(`/${meetingId}`)}
+            >
+              Rejoin
+            </PlainButton>
+          )}
+          <Button size="sm" onClick={() => router.push("/")}>
+            Return to home screen
+          </Button>
         </div>
-        <div className="max-w-100 flex flex-wrap flex-col rounded items-center pl-4 pr-3 pt-4 pb-1 border border-hairline-gray text-left">
+
+        {/* Feedback button */}
+        <Button size="sm">Submit feedback</Button>
+
+        {/* Security information */}
+        <div className="flex flex-col items-center pl-4 pr-3 pt-4 pb-1 border text-left">
           <div className="flex items-center">
             <Image
               alt="Your meeting is safe"
@@ -150,19 +142,19 @@ const MeetingEnd = ({ params, searchParams }: MeetingEndProps) => {
               src="https://www.gstatic.com/meet/security_shield_356739b7c38934eec8fb0c8e93de8543.svg"
             />
             <div className="pl-4">
-              <h2 className="text-meet-black text-lg leading-6 tracking-normal font-normal">
-                Your meeting is safe
-              </h2>
-              <div className="font-roboto text-sm text-meet-gray tracking-loosest">
-                No one can join a meeting unless invited or admitted by the host
-              </div>
+              <h2 className="text-meet-black text-lg">Your meeting is safe</h2>
+              <p className="font-roboto text-sm text-meet-gray">
+                Only invited or admitted guests can join.
+              </p>
             </div>
           </div>
-          <div className="pt-2 w-full flex grow justify-end whitespace-nowrap">
-            <PlainButton size="sm">Learn more</PlainButton>
-          </div>
+          <PlainButton size="sm" className="mt-2">
+            Learn more
+          </PlainButton>
         </div>
       </div>
+
+      {/* Audio element */}
       <audio
         ref={audioRef}
         src="https://www.gstatic.com/meet/sounds/leave_call_bfab46cf473a2e5d474c1b71ccf843a1.ogg"

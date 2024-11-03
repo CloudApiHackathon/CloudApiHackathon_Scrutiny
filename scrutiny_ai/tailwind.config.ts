@@ -76,6 +76,22 @@ const config: Config = {
 				"meet-red": "#ea4335",
 				"hover-red": "#eb5346",
 				"meet-orange": "#fa7b17",
+				sidebar: {
+					DEFAULT: "hsl(var(--sidebar-background))",
+					foreground: "hsl(var(--sidebar-foreground))",
+					primary: "hsl(var(--sidebar-primary))",
+					"primary-foreground":
+						"hsl(var(--sidebar-primary-foreground))",
+					accent: "hsl(var(--sidebar-accent))",
+					"accent-foreground":
+						"hsl(var(--sidebar-accent-foreground))",
+					border: "hsl(var(--sidebar-border))",
+					ring: "hsl(var(--sidebar-ring))",
+					"primary-foreground":
+						"hsl(var(--sidebar-primary-foreground))",
+					"accent-foreground":
+						"hsl(var(--sidebar-accent-foreground))",
+				},
 			},
 			borderRadius: {
 				lg: "var(--radius)",
@@ -170,10 +186,15 @@ const config: Config = {
 			},
 			keyframes: {
 				rotate: {
-					"100%": { transform: "rotate(360deg)" },
+					"100%": {
+						transform: "rotate(360deg)",
+					},
 				},
 				dash: {
-					"0%": { strokeDasharray: "1, 200", strokeDashoffset: "0" },
+					"0%": {
+						strokeDasharray: "1, 200",
+						strokeDashoffset: "0",
+					},
 					"50%": {
 						strokeDasharray: "89, 200",
 						strokeDashoffset: "-35px",
@@ -184,25 +205,47 @@ const config: Config = {
 					},
 				},
 				popup: {
-					"0%": { transform: "translateY(0)" },
-					"100%": { transform: "translateY(-90px)" },
+					"0%": {
+						transform: "translateY(0)",
+					},
+					"100%": {
+						transform: "translateY(-90px)",
+					},
 				},
 				"fade-in": {
-					"0%": { opacity: "0" },
-					"100%": { opacity: "1" },
+					"0%": {
+						opacity: "0",
+					},
+					"100%": {
+						opacity: "1",
+					},
 				},
 				"delayed-fade-in": {
-					"0%": { opacity: "0" },
-					"66%": { opacity: "0" },
-					"100%": { opacity: "1" },
+					"0%": {
+						opacity: "0",
+					},
+					"66%": {
+						opacity: "0",
+					},
+					"100%": {
+						opacity: "1",
+					},
 				},
 				"transition-overlay-fade-in": {
-					"0%": { opacity: "0" },
-					"100%": { opacity: "0.9" },
+					"0%": {
+						opacity: "0",
+					},
+					"100%": {
+						opacity: "0.9",
+					},
 				},
 				countdown: {
-					"0%": { strokeDashoffset: "0" },
-					"100%": { strokeDashoffset: "113" },
+					"0%": {
+						strokeDashoffset: "0",
+					},
+					"100%": {
+						strokeDashoffset: "113",
+					},
 				},
 			},
 		},

@@ -207,7 +207,7 @@ const Lobby = () => {
   if (errorFetchingMeeting) {
     console.error("Error fetching meeting");
     console.log(errorFetchingMeeting);
-    // router.push(`/${meetingId}/meeting-end?invalid=true`);
+    router.push(`/${meetingId}/meeting-end?invalid=true`);
   }
 
   return (

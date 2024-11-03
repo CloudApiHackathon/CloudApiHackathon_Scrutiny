@@ -56,6 +56,7 @@ const Meeting = ({ params }: MeetingProps) => {
     useState<Channel<DefaultStreamChatGenerics>>();
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isRecordingListOpen, setIsRecordingListOpen] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [participantInSpotlight, _] = participants;
   const [prevParticipantsCount, setPrevParticipantsCount] = useState(0);
   const isCreator = call?.state.createdBy?.id === user?.id;

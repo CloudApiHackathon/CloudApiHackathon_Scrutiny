@@ -26,6 +26,8 @@ const MeetingCard = ({
         return "bg-red-100";
       case "LIVE":
         return "bg-green-100";
+      case "IDLE":
+        return "bg-yellow-100";
       default:
         return "bg-blue-100";
     }

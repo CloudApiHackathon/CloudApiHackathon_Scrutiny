@@ -1,66 +1,187 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useUser } from "@auth0/nextjs-auth0/client";
-import Header from "@/components/Header";
-import { Calendar } from "@/components/ui/calendar";
-import clsx from "clsx";
+import { useForm, FormProvider } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
+import router from "next/router";
+import clsx from "clsx";
+import { format } from "date-fns";
+import { customAlphabet } from "nanoid";
+
+// Components
+import Header from "@/components/Header";
 import MeetingCard from "@/components/MeetingCard";
 import Spinner from "@/components/Spinner";
-import Folder from "@/components/icons/Folder";
+import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@/components/ui/button";
+import Plus from "@/components/icons/Plus";
+import Url from "@/components/icons/Url";
+import { CalendarIcon, Copy } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@radix-ui/react-dropdown-menu";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@radix-ui/react-popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormDescription,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+
+// Contexts
+import { AppContext } from "@/contexts/AppProvider";
+
+// Interfaces
+interface Meeting {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  created_at: string;
+}
+
+// Form Schema
+const formSchema = z.object({
+  title: z.string(),
+  description: z.string(),
+  date: z.date(),
+  participants: z.array(z.string()),
+});
 
 const Page = () => {
   const { user, isLoading } = useUser();
-  const [isMeetingLoading, setIsMeetingLoading] = useState(true);
-  interface Meeting {
-    id: string;
-    title: string;
-    description: string;
-    status: string;
-    created_at: string;
-  }
+  const { setNewMeeting } = useContext(AppContext);
 
+  // State
+  const [isMeetingLoading, setIsMeetingLoading] = useState(true);
+  const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [code, setCode] = useState("");
   const [meetings, setMeetings] = useState<Meeting[]>([]);
 
+  // Form
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      date: undefined,
+      participants: [],
+    }
+  });
+
+  // Functions
+  const generateMeetingId = async () => {
+    const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz", 4);
+    const id = `${nanoid(3)}-${nanoid(4)}-${nanoid(3)}`;
+    try {
+      await createMeeting(id, "Instant meeting", "IDLE");
+      return id;
+    } catch (e) {
+      console.error("Error generating meeting ID:", e);
+    }
+  };
+
+  const createMeeting = async (id: string, title: string, status: string) => {
+    await axios.post(
+      `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/meetings/`,
+      {
+        title,
+        description: title,
+        status,
+        nanoid: id,
+        date: form.getValues("date") || "",
+      },
+      {
+        headers: { Authorization: `Bearer ${user?.accessToken || ""}` },
+      }
+    );
+  };
+
+  const handleInstantMeeting = async () => {
+    const id = await generateMeetingId();
+    if (id) {
+      setNewMeeting(true);
+      router.push(`/${id}`);
+    }
+  };
+
+  const handleLaterMeeting = async () => {
+    const id = await generateMeetingId();
+    if (id) {
+      setCode(id);
+      setIsOpen(true);
+    }
+  };
+
+  const onSubmit = async (data: { title: any }) => {
+    try {
+      await createMeeting(
+        customAlphabet("abcdefghijklmnopqrstuvwxyz", 4)(),
+        data.title,
+        "SCHEDULED"
+      );
+      setIsScheduleOpen(false);
+    } catch (e) {
+      console.error("Error scheduling meeting:", e);
+    }
+  };
+
+  // Fetch Meetings
   useEffect(() => {
     const fetchParticipants = async () => {
       try {
         if (!user?.accessToken) return;
         setIsMeetingLoading(true);
+
         const participantsResponse = await axios.get(
           `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/participants/`,
           {
-            headers: {
-              Authorization: `Bearer ${user?.accessToken}`,
-            },
+            headers: { Authorization: `Bearer ${user?.accessToken}` },
           }
         );
 
-        // Extract participant meeting IDs
-        const participantMeetings = participantsResponse.data.map(
-          (participant: { meetingId: any }) => participant.meetingId
-        );
+        const participantMeetings = [
+          ...new Set(
+            participantsResponse.data
+              .map((participant: { meetingId: any }) => participant.meetingId)
+              .filter(Boolean)
+          ),
+        ];
 
-        // Use Promise.all to fetch all meetings in parallel
         const meetingPromises = participantMeetings.map((meetingId: any) =>
           axios.get(
             `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/meetings/${meetingId}`,
             {
-              headers: {
-                Authorization: `Bearer ${user?.accessToken || ""}`,
-              },
+              headers: { Authorization: `Bearer ${user?.accessToken || ""}` },
             }
           )
         );
 
-        // Wait for all meeting requests to complete
         const meetingResponses = await Promise.all(meetingPromises);
-
-        // Extract meeting data from the responses
         const meetingsData = meetingResponses.map((response) => response.data);
 
-        // Update the state with all meetings at once
         setMeetings(
           meetingsData.filter((meeting: any) => meeting.status !== "END")
         );
@@ -74,90 +195,187 @@ const Page = () => {
     fetchParticipants();
   }, [user?.accessToken]);
 
+  // JSX
   return (
-    <div>
-      <Header />
-      <div
-        className={clsx("flex", !isLoading ? "animate-fade-in" : "opacity-0")}
-      >
-        {/* Sidebar */}
-        <aside
-          id="default-sidebar"
-          className="mt-5 w-64 h-screen bg-white shadow-lg rounded-xl p-4 text-gray-700 shadow-blue-gray-900/5 hidden sm:block"
-        >
-          <ul className="space-y-2 font-medium">
-            <li className="hover:bg-blue">
-              <a
-                href="/dashboard"
-                className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
-              >
-                <svg
-                  className="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
-                  aria-hidden="true"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="currentColor"
-                  viewBox="0 0 18 18"
-                >
-                  <path d="M6.143 0H1.857A1.857 1.857 0 0 0 0 1.857v4.286C0 7.169.831 8 1.857 8h4.286A1.857 1.857 0 0 0 8 6.143V1.857A1.857 1.857 0 0 0 6.143 0Zm10 0h-4.286A1.857 1.857 0 0 0 10 1.857v4.286C10 7.169 10.831 8 11.857 8h4.286A1.857 1.857 0 0 0 18 6.143V1.857A1.857 1.857 0 0 0 16.143 0Zm-10 10H1.857A1.857 1.857 0 0 0 0 11.857v4.286C0 17.169.831 18 1.857 18h4.286A1.857 1.857 0 0 0 8 16.143v-4.286A1.857 1.857 0 0 0 6.143 10Zm10 0h-4.286A1.857 1.857 0 0 0 10 11.857v4.286c0 1.026.831 1.857 1.857 1.857h4.286A1.857 1.857 0 0 0 18 16.143v-4.286A1.857 1.857 0 0 0 16.143 10Z" />
-                </svg>
-                <span className="flex-1 ms-3 whitespace-nowrap">Overview</span>
-              </a>
-            </li>
-            <li>
-              <a
-                href="/dashboard/storage"
-                className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 group"
-              >
-                <Folder className="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
-                <span className="flex-1 ml-3 whitespace-nowrap">Storage</span>
-              </a>
-            </li>
-          </ul>
-        </aside>
-
+    <div
+      className={clsx(
+        "flex flex-col min-h-screen w-full",
+        !isLoading ? "animate-fade-in" : "opacity-0"
+      )}
+    >
+      <Header isSidebarOpen={true} />
+      <div className="flex flex-grow overflow-y-hidden">
         {/* Main Content */}
-        <div className="flex-1 p-4 overflow-y-hidden">
-          <div className="flex h-screen">
-            {/* Left side - 3/4 width */}
-            <div className="w-4/5 p-4 bg-white">
-              <div className="flex flex-col items-start justify-center h-auto p-6 overflow-y-auto">
-                <h1 className="text-2xl font-semibold text-gray-600 dark:text-gray-300">
-                  Upcoming Meetings
-                </h1>
-                <div className="mt-10 w-full h-full flex-1 justify-center items-center">
-                  {isMeetingLoading ? (
-                    <div className="flex items-center justify-center items-center">
-                      <Spinner />
-                    </div>
-                  ) : (
-                    <div className="space-y-4 w-full">
-                      {meetings.map((meetings) => (
-                        <MeetingCard
-                          key={meetings.id}
-                          meeting={meetings}
-                          className="w-full"
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
+        <div className="flex w-full">
+          <div className="flex-grow p-4 bg-white">
+            <div className="flex flex-col items-start justify-center h-auto p-6 overflow-y-auto">
+              <h1 className="text-2xl font-semibold text-gray-600 dark:text-gray-300">
+                Upcoming Meetings
+              </h1>
+              <div className="mt-10 w-full h-full flex-1 justify-center items-center">
+                {isMeetingLoading ? (
+                  <div className="flex items-center justify-center">
+                    <Spinner />
+                  </div>
+                ) : (
+                  <div className="space-y-4 w-full">
+                    {meetings.map((meeting) => (
+                      <MeetingCard
+                        key={meeting.id}
+                        meeting={meeting}
+                        className="w-full"
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
+          </div>
 
-            {/* Right side - 1/4 width */}
-            <div className="w-1/5 p-4 flex justify-center mt-10">
-              {/* Centered Calendar component */}
-              <Calendar
-                style={{
-                  borderRadius: "1rem",
-                  boxShadow: "0 0 10px rgba(0, 0, 0, 0.1)",
-                  height: "fit-content",
-                }}
-              />
-            </div>
+          {/* Sidebar */}
+          <div className="w-1/4 p-4 flex justify-center mt-10">
+            <Calendar
+            selected={new Date()}
+              mode="single"
+              style={{
+                borderRadius: "1rem",
+                boxShadow: "0 0 10px rgba(0, 0, 0, 0.1)",
+                height: "fit-content",
+              }}
+            />
           </div>
         </div>
       </div>
+
+      {/* Dropdown for Meeting Options */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            size="icon"
+            className="fixed bottom-4 right-4"
+          >
+            <Plus />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-56" align="end">
+          <DropdownMenuItem onClick={handleLaterMeeting}>
+            <Url /> Create meeting for later
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleInstantMeeting}>
+            <Plus /> Create instant meeting
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setIsScheduleOpen(true)}>
+            <CalendarIcon /> Schedule meeting
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {/* Dialogs */}
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Your Invitation Link</DialogTitle>
+            <DialogDescription>
+              <p>Share this link with your team to schedule a meeting later</p>
+              <div className="flex items-center gap-2 mt-4">
+                <div className="p-4 bg-gray-900 text-gray-100 rounded-md font-mono text-sm">
+                  {code}
+                </div>
+                <Button onClick={() => navigator.clipboard.writeText(code)}>
+                  <Copy /> Copy
+                </Button>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isScheduleOpen} onOpenChange={setIsScheduleOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Schedule your meeting</DialogTitle>
+            <DialogDescription>
+              Fill in the details below to schedule your meeting
+            </DialogDescription>
+            <FormProvider {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4"
+              >
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Title</FormLabel>
+                      <FormControl>
+                        <Input placeholder="An upcoming interview" {...field} />
+                      </FormControl>
+                      <FormDescription>Enter a title</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Meeting description" {...field} />
+                      </FormControl>
+                      <FormDescription>Enter a description</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="date"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={clsx(
+                                "w-[240px] pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value
+                                ? format(field.value, "PPP")
+                                : "Pick a date"}
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent align="start" className="p-0">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <Button type="submit" className="w-full">
+                  Schedule meeting
+                </Button>
+              </form>
+            </FormProvider>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

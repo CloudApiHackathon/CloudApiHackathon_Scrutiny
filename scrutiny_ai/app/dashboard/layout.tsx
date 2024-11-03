@@ -1,12 +1,16 @@
+// Layout.js
 import { ReactNode } from "react";
-import Header from "@/components/Header";
+import { AppSidebar } from "@/components/AppSideBar";
+import { SidebarProvider } from "@/components/ui/sidebar";
+
 
 export default function Layout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex flex-col h-screen">
-      <div className="flex-1 overflow-y-auto">
-        <main>{children}</main>
-      </div>
-    </div>
+    <SidebarProvider>
+      <AppSidebar />
+      <main className="w-full">
+        {children}
+      </main>
+    </SidebarProvider>
   );
 }

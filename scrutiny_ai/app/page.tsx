@@ -10,12 +10,11 @@ import clsx from "clsx";
 import { AppContext, MEETING_ID_REGEX } from "@/contexts/AppProvider";
 import { API_KEY, CALL_TYPE } from "@/contexts/MeetProvider";
 import Header from "@/components/Header";
-import KeyboardFilled from "@/components/icons/KeyboardFilled";
-import PlainButton from "@/components/PlainButton";
-import TextField from "@/components/TextField";
+
 import Videocall from "@/components/icons/Videocall";
 import {
   ErrorFromResponse,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   GetCallResponse,
   StreamVideoClient,
   User,
@@ -40,7 +39,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import Copy from "@/components/icons/Copy";
-import CalendarIcon from "@/components/icons/Calendar";
+import { CalendarIcon } from "@radix-ui/react-icons";
 
 import { z } from "zod";
 import {
@@ -61,6 +60,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
 
 // Define schema for form validation
 const formSchema = z.object({
@@ -78,14 +78,17 @@ const Home = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [code, setCode] = useState("");
+  const [emails, setEmails] = useState<string[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [checkingCode, setCheckingCode] = useState(false);
   const [error, setError] = useState("");
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
       description: "",
-      date: "",
+      date: undefined,
       participants: [],
     },
   });
@@ -112,20 +115,49 @@ const Home = () => {
   };
 
   // Create a new meeting
-  const createMeeting = async (id, title, status) => {
+  const createMeeting = async (id: string, title: string, status: string) => {
     await axios.post(
-      `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/meetings`,
+      `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/meetings/`,
       {
         title,
         description: title,
         status,
         nanoid: id,
-        date: form.getValues("date") || "",
+        // date: form.getValues("date") || "",
       },
       {
         headers: { Authorization: `Bearer ${user?.accessToken || ""}` },
       }
     );
+  };
+
+  const handleDelete = (emailToDelete: string) => {
+    setEmails((prevEmails) =>
+      prevEmails.filter((email) => email !== emailToDelete)
+    );
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && e.currentTarget.value) {
+      const newEmail = e.currentTarget.value.trim();
+      if (newEmail && !emails.includes(newEmail)) {
+        setEmails((prevEmails) => [...prevEmails, newEmail]);
+        e.currentTarget.value = ""; // Clear input after adding
+      }
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const lastChar = value.charAt(value.length - 1);
+    // If comma is pressed, add email
+    if (lastChar === ",") {
+      const newEmail = value.slice(0, -1).trim(); // Remove the comma
+      if (newEmail && !emails.includes(newEmail)) {
+        setEmails((prevEmails) => [...prevEmails, newEmail]);
+        e.target.value = ""; // Clear input after adding
+      }
+    }
   };
 
   const handleInstantMeeting = async () => {
@@ -166,7 +198,7 @@ const Home = () => {
     }
   };
 
-  const onSubmit = async (data: { title: any }) => {
+  const onSubmit = async (data: { title: string }) => {
     try {
       await createMeeting(
         customAlphabet("abcdefghijklmnopqrstuvwxyz", 4)(),
@@ -189,11 +221,11 @@ const Home = () => {
         )}
       >
         {/* Main Title and Description */}
-        <div className="text-center max-w-2xl p-4 pt-7">
-          <h1 className="text-5xl text-black pb-2">
+        <div className="text-center max-w-2xl px-6 py-8">
+          <h1 className="text-5xl font-bold text-gray-900 mb-4">
             Video Interviews for Developers
           </h1>
-          <p className="text-gray pb-8">
+          <p className="text-lg text-gray-600">
             Connect with your team and interview candidates remotely
           </p>
         </div>
@@ -204,7 +236,7 @@ const Home = () => {
             <>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button className="h-12">
+                  <Button>
                     <Videocall /> New meeting
                   </Button>
                 </DropdownMenuTrigger>
@@ -224,34 +256,32 @@ const Home = () => {
 
               {/* Code Join Input */}
               <div className="flex items-center gap-2 sm:ml-4">
-                <TextField
-                  label="Code or link"
+                <Input
                   name="code"
                   placeholder="Enter a code or link"
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
-                  icon={<KeyboardFilled />}
                 />
-                <PlainButton onClick={handleCodeJoin} disabled={!code}>
+                <Button onClick={handleCodeJoin} disabled={!code}>
                   Join
-                </PlainButton>
+                </Button>
               </div>
             </>
           )}
         </div>
 
         {/* Get Link Illustration */}
-        <div className="mt-8 flex flex-col items-center">
+        <div className="mt-10 flex flex-col items-center">
           <Image
             src="https://www.gstatic.com/meet/user_edu_get_a_link_light_90698cd7b4ca04d3005c962a3756c42d.svg"
             alt="Get a link you can share"
             width={248}
             height={248}
           />
-          <h2 className="text-2xl text-black text-center">
+          <h2 className="text-2xl font-semibold text-gray-900 text-center mb-3 mt-10">
             Get a link you can share
           </h2>
-          <p className="text-gray text-center">
+          <p className="text-lg text-gray-600 text-center">
             Click <span className="font-bold">New meeting</span> to get a link
             you can send to people you want to meet with
           </p>
@@ -283,109 +313,120 @@ const Home = () => {
         <Dialog open={isScheduleOpen} onOpenChange={setIsScheduleOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Schedule your meeting</DialogTitle>
+              <DialogTitle>Schedule Meeting</DialogTitle>
               <DialogDescription>
-                Fill in the details below to schedule your meeting
+                Set up a meeting in advance and invite participants
               </DialogDescription>
-              <Form {...form}>
-                <form
-                  onSubmit={form.handleSubmit(onSubmit)}
-                  className="space-y-4"
-                >
-                  <FormField
-                    control={form.control}
-                    name="title"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Title</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="An upcoming inteview"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          This is your public display title.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Description</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Description"
-                            {...field}
-                            multiple
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          This is your interview information.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="date"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant={"outline"}
-                                  className={clsx(
-                                    "w-[240px] pl-3 text-left font-normal",
-                                    !field.value && "text-muted-foreground"
-                                  )}
-                                >
-                                  {field.value ? (
-                                    format(field.value, "PPP")
-                                  ) : (
-                                    <>Date</>
-                                  )}
-                                  <CalendarIcon className="ml-auto opacity-50" />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent
-                              className="w-auto p-0"
-                              align="start"
-                            >
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                disabled={(date) =>
-                                  date > new Date() ||
-                                  date < new Date("1900-01-01")
-                                }
-                                initialFocus
-                              />
-                            </PopoverContent>
-                          </Popover>
-                        </FormControl>
-                        <FormDescription>
-                          This is your interview date.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button type="submit" className="w-full">
-                    Schedule
-                  </Button>
-                </form>
-              </Form>
             </DialogHeader>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)}>
+                <FormField
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Title</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Meeting title" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Meeting description" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  name="date"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col mt-3">
+                      <FormLabel>Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className="w-full pl-3 text-left"
+                            >
+                              {field.value
+                                ? format(field.value, "PPP")
+                                : "Pick a date"}
+                              <CalendarIcon className="ml-auto opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) => date < new Date()}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormDescription>
+                        Select a future date for the meeting
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  name="participants"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col mt-3">
+                      <FormLabel>Participants</FormLabel>
+                      <FormControl>
+                        <div className="flex flex-wrap gap-2">
+                          {emails.map((email, index) => (
+                            <Badge
+                              key={index}
+                              onClick={() => handleDelete(email)}
+                            >
+                              {email}
+                            </Badge>
+                          ))}
+                          <Input
+                            placeholder="Email addresses"
+                            {...field}
+                            value={field.value.join(", ")}
+                            onChange={(e) => {
+                              const newValue = e.target.value;
+                              field.onChange(
+                                newValue
+                                  .split(", ")
+                                  .map((email) => email.trim())
+                              ); // Update field value
+                              setEmails(
+                                newValue
+                                  .split(", ")
+                                  .map((email) => email.trim())
+                              ); // Update emails state
+                            }}
+                            onKeyDown={handleKeyDown}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormDescription>
+                        Separate multiple email addresses with commas
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" className="w-full mt-4">
+                  Schedule Meeting
+                </Button>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
       </main>
