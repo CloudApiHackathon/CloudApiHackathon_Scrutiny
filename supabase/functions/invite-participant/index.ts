@@ -5,7 +5,6 @@ import { Supabase } from "../utils/supabase.ts";
 Deno.serve(async (req) => {
   try {
     const method = req.method;
-    console.log(method);
     switch (method) {
       case "POST": {
         const authHeader = req.headers.get("Authorization");
@@ -60,7 +59,7 @@ Deno.serve(async (req) => {
 
         // Check if the user is already a participant in the meeting
         const existingParticipant = participants.find(
-          (participant) => participant.userId === userId,
+          (participant: any) => participant.userId === userId,
         );
 
         if (existingParticipant) {

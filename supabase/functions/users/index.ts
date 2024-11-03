@@ -62,13 +62,24 @@ Deno.serve(async (req) => {
         }
       }
       case "POST": {
+        const { data: userData, error: userError } = await supabase.from("user")
+          .select("*")
+          .eq(
+            "tokenIdentifier",
+            payload.sub,
+          ).single();
+        if (userData) {
+          return new Response(JSON.stringify(userData), { status: 200 });
+        }
         const body = await req.json();
-        const { data, error } = await supabase.from("user").insert({
+        const { data, error } = await supabase.from("user").upsert({
           ...body,
           tokenIdentifier: payload.sub,
-        });
+        }).eq(
+          "tokenIdentifier",
+          payload.sub,
+        );
         if (error) {
-          console.error(error);
           return new Response(error.message, { status: 500 });
         }
         return new Response(JSON.stringify(data), { status: 200 });
@@ -85,7 +96,7 @@ Deno.serve(async (req) => {
           return new Response(userError.message, { status: 401 });
         }
         const body = await req.json();
-        const { data, error } = await supabase.from("user").update(body).eq(
+        const { data, error } = await supabase.from("user").upsert(body).eq(
           "id",
           userData.id,
         );

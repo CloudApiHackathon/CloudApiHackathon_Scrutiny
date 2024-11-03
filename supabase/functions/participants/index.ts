@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
         const { data, error } = await supabase
           .from("participant")
           .select("*")
-          .eq("id", id)
+          .eq("meetingId", id)
           .eq("userId", userData.id)
           .single();
         if (error) {
@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
           .from("participant")
           .select("*")
           .eq("userId", userData.id)
-          .order("createdAt", { ascending: false });
+          .order("created_at", { ascending: false });
 
         if (error) {
           return new Response(error.message, { status: 500 });
@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
     }
     case "POST": {
       const body = await req.json();
-      const { data, error } = await supabase.from("participant").insert([
+      const { data, error } = await supabase.from("participant").upsert([
         {
           ...body,
           userId: userData.id,
@@ -72,12 +72,29 @@ Deno.serve(async (req) => {
     }
     case "PUT": {
       if (!id) {
-        return new Response("Missing participant ID", { status: 400 });
+        return new Response("Missing meeting ID", { status: 400 });
+      }
+      const { data: meetingData, error: meetingError } = await supabase.from(
+        "meeting",
+      )
+        .select("*")
+        .eq("nanoid", id)
+        .single();
+      if (meetingError) {
+        return new Response(meetingError.message, { status: 500 });
       }
       const body = await req.json();
+      console.log("userId", userData.id);
+      console.log("meetingId", meetingData.id);
+      console.log("body", body);
       const { data, error } = await supabase.from("participant")
-        .update(body)
-        .eq("id", id).eq("userId", userData.id);
+        .upsert({
+          ...body,
+          userId: userData.id,
+          meetingId: meetingData.id,
+        })
+        .eq("meetingId", meetingData.id)
+        .eq("userId", userData.id);
       if (error) {
         return new Response(error.message, { status: 500 });
       }
