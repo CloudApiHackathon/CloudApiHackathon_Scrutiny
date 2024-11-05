@@ -134,6 +134,24 @@ const Home = () => {
     }
   };
 
+  const updateParticipantStatus = async (meetingId: string) => {
+    try {
+      await axios.put(
+        `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/participants/${meetingId}`,
+        {
+          status: "STAND_BY",
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${user?.accessToken || ""}`,
+          },
+        }
+      );
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const handleDelete = (emailToDelete: string) => {
     setEmails((prevEmails) =>
       prevEmails.filter((email) => email !== emailToDelete)
@@ -205,18 +223,18 @@ const Home = () => {
 
   const onSubmit = async (data: { title: string }) => {
     try {
+      const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz", 4);
+      const id = `${nanoid(3)}-${nanoid(4)}-${nanoid(3)}`;
       setIsCreatingNewMeeting(true);
-      await createMeeting(
-        customAlphabet("abcdefghijklmnopqrstuvwxyz", 4)(),
-        data.title,
-        "IDLE"
-      );
+      await createMeeting(id, data.title, "IDLE");
+      await updateParticipantStatus(id);
       await axios.post(
         "/api/invite",
         {
           title: data.title,
           date: form.getValues("date"),
           participants: emails,
+          meetingId: id,
         },
         {
           headers: { Authorization: `Bearer ${user?.accessToken || ""}` },
@@ -258,7 +276,13 @@ const Home = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button>
-                    <Videocall /> New meeting
+                    {isCreatingNewMeeting ? (
+                      <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Videocall /> New meeting
+                      </>
+                    )}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end">
@@ -271,8 +295,7 @@ const Home = () => {
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => setIsScheduleOpen(true)}>
-                    <CalendarIcon className="h-3 w-3 ml-1 mr-1" /> Schedule
-                    meeting
+                    <CalendarIcon /> Schedule meeting
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -319,13 +342,13 @@ const Home = () => {
                 <p>
                   Share this link with your team to schedule a meeting later
                 </p>
-                <div className="flex items-center gap-2 mt-4">
-                  <div className="p-4 bg-gray-900 text-gray-100 rounded-md font-mono text-sm">
-                    {code}
+                <div className="flex flex-col items-center gap-2 mt-4">
+                  <div className="flex w-full max-w-sm items-center space-x-2">
+                    <Input type="text" placeholder="Email" value={code} />
+                    <Button onClick={() => navigator.clipboard.writeText(code)}>
+                      <Copy /> Copy
+                    </Button>
                   </div>
-                  <Button onClick={() => navigator.clipboard.writeText(code)}>
-                    <Copy /> Copy
-                  </Button>
                 </div>
               </DialogDescription>
             </DialogHeader>
@@ -446,11 +469,9 @@ const Home = () => {
                   )}
                 />
                 <Button type="submit" className="w-full mt-4">
-                  {isCreatingNewMeeting ?? (
-                    <>
-                      <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
-                    </>
-                  )}
+                  {isCreatingNewMeeting ? (
+                    <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+                  ) : null}
                   Schedule Meeting
                 </Button>
               </form>

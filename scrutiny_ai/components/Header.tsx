@@ -241,7 +241,7 @@ const Header = ({ navItems = true, isSidebarOpen = false }: HeaderProps) => {
           </>
         )}
         {!isSidebarOpen && (
-          <div className=" flex items-center justify-end w-[6.5625rem] lg:ml-5">
+          <div className=" flex items-center justify-end w-[2.5625rem] lg:ml-5">
             <div
               className={clsx(
                 "w-[3.04rem] grow flex items-center justify-end [&_img]:w-9 [&_span]:w-9 [&_img]:h-9 [&_span]:h-9",

@@ -21,7 +21,7 @@ export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
       on {meeting.date}.
     </p>
     <p>
-      Please click <a href={inviteLink}>here</a> to join the meeting.
+      Please click <a href={inviteLink}>here</a> to confirm your participant.
     </p>
   </div>
 );
