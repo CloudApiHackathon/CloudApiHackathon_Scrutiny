@@ -134,7 +134,7 @@ const Home = () => {
           description: description || "",
           status,
           nanoid: id,
-          // date: form.getValues("date") || "",
+          occurred_at: form.getValues("date") || "",
         },
         {
           headers: { Authorization: `Bearer ${user?.accessToken || ""}` },

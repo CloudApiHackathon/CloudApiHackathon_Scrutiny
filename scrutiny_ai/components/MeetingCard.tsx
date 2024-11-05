@@ -13,6 +13,7 @@ import { useContext } from "react";
 import { CalendarIcon } from "@radix-ui/react-icons";
 
 interface Meeting {
+  occurred_at: string;
   id: string;
   title: string;
   description: string;
@@ -107,7 +108,7 @@ const MeetingCard = ({
           <CalendarIcon className="mr-1 h-3 w-3 text-gray-500" />
           <div className="space-y-1">
             <p className="text-sm font-medium leading-tight text-gray-500">
-              {new Date(meeting.created_at).toLocaleString("en-US", {
+              {new Date(meeting.occurred_at ?? meeting.created_at).toLocaleString("en-US", {
                 year: "numeric",
                 month: "long",
                 day: "2-digit",
