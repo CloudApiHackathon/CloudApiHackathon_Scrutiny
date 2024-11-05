@@ -337,13 +337,6 @@ const Home = () => {
             height={400}
             className="max-w-full max-h-full rounded-full"
           />
-          <h2 className="text-2xl font-semibold text-gray-900 text-center mb-3 mt-10">
-            Get a link you can share
-          </h2>
-          <p className="text-lg text-gray-600 text-center">
-            Click <span className="font-bold">New meeting</span> to get a link
-            you can send to people you want to meet with
-          </p>
         </div>
 
         {/* Dialog for Invitation Link */}

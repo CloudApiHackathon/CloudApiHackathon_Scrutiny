@@ -41,7 +41,8 @@ Deno.serve(async (req) => {
         }
 
         await Promise.all(
-          resume.map(async (r) => {
+          resume.map(async (r: { fileName: any; signedUrlError: any; signedUrl: any; }) => {
+            console.log("file", r);
             try {
               const { data, error } = await supabase.storage
                 .from("storages")

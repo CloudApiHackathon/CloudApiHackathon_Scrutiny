@@ -30,6 +30,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import File from "@/components/icons/File";
 
 interface FileData {
+  signedUrl: string | undefined;
   url: string | URL | undefined;
   id: string;
   fileName: string;
@@ -105,6 +106,7 @@ const Page = () => {
       setFiles((prev) => [
         ...prev,
         {
+          signedUrl: undefined,
           url: undefined,
           id: file.name,
           fileName: file.name.split("\\").pop()!,
@@ -143,10 +145,8 @@ const Page = () => {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                   {files.map((file) => (
-                    <div
-                      onClick={() => {
-                        window.open(file.url);
-                      }}
+                    <a
+                      href={file.signedUrl}
                       key={file.id}
                       className="inline-flex flex-col items-center justify-center p-3 bg-gray-100 rounded-lg transition duration-200 ease-in-out transform hover:bg-gray-200 hover:scale-105 hover:shadow-lg max-w-max"
                     >
@@ -154,7 +154,7 @@ const Page = () => {
                       <p className="mt-2 text-sm font-semibold text-gray-600 dark:text-gray-300 truncate">
                         {file.fileName.slice(0, 20) + "..."}
                       </p>
-                    </div>
+                    </a>
                   ))}
                 </div>
               )}
