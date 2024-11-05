@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import clsx from "clsx";
-import PlainButton from "./PlainButton";
 import useTime from "../hooks/useTime";
 import UserButton from "./UserButton";
 import { useRouter } from "next/navigation";
@@ -253,14 +252,14 @@ const Header = ({ navItems = true, isSidebarOpen = false }: HeaderProps) => {
                   <UserButton user={user} />
                 </div>
               ) : (
-                <PlainButton
+                <Button
                   size="sm"
                   onClick={() => {
                     router.push("/api/auth/login");
                   }}
                 >
                   Sign In
-                </PlainButton>
+                </Button>
               )}
             </div>
           </div>
