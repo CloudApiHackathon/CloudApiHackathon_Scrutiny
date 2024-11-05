@@ -10,22 +10,48 @@ console.log("Hello from Functions!");
 
 Deno.serve(async (req) => {
   try {
-    const {type} = await req.json();
-    if (type === "call.ended") {
-      const supabase = Supabase.getInstance();
-      const { error } = await supabase
-        .from("meeting")
-        .insert({ 
-          ended_at: new Date(),
-          status: "END"
-        });
+    const payload = await req.json();
+    console.log(`Received event type:`, payload);
+    switch (payload.type) {
+      case "call.ended": {
+        const supabase = Supabase.getInstance();
+        const id = payload.call.id;
+        const { error } = await supabase
+          .from("meeting")
+          .update({
+            ended_at: new Date(),
+            status: "END",
+          })
+          .eq("nanoid", id);
 
-      if (error) {
-        return new Response(`Error inserting meeting: ${error.message}`, { status: 500 });
+        if (error) {
+          return new Response(`Error inserting meeting: ${error.message}`, {
+            status: 500,
+          });
+        }
+        return new Response("Meeting ended", { status: 200 });
       }
+      case "call.started": {
+        const supabase = Supabase.getInstance();
+        const id = payload.call.id;
+        const { error } = await supabase
+          .from("meeting")
+          .update({
+            started_at: new Date(),
+            status: "LIVE",
+          })
+          .eq("nanoid", id);
+
+        if (error) {
+          return new Response(`Error inserting meeting: ${error.message}`, {
+            status: 500,
+          });
+        }
+        return new Response("Meeting started", { status: 200 });
+      }
+      default:
+        return new Response("Hello from Functions!", { status: 200 });
     }
-    
-    return new Response("Hello from Functions!", { status: 200 });
   } catch (error) {
     if (error instanceof Error) {
       return new Response(error.message, { status: 500 });
