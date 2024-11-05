@@ -114,13 +114,18 @@ const Home = () => {
   };
 
   // Create a new meeting
-  const createMeeting = async (id: string, title: string, status: string) => {
+  const createMeeting = async (
+    id: string,
+    title: string,
+    status: string,
+    description?: string
+  ) => {
     try {
       await axios.post(
         `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/meetings/`,
         {
           title,
-          description: title,
+          description: description || "",
           status,
           nanoid: id,
           // date: form.getValues("date") || "",
@@ -220,17 +225,19 @@ const Home = () => {
     }
   };
 
-  const onSubmit = async (data: { title: string }) => {
+  const onSubmit = async (data: { title: string; description: string }) => {
     try {
+      console.log("data", data);
       const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz", 4);
       const id = `${nanoid(3)}-${nanoid(4)}-${nanoid(3)}`;
       setIsCreatingNewMeeting(true);
-      await createMeeting(id, data.title, "IDLE");
+      await createMeeting(id, data.title, "IDLE", data.description);
       await updateParticipantStatus(id);
       await axios.post(
         "/api/invite",
         {
           title: data.title,
+          description: data.description,
           date: form.getValues("date"),
           participants: emails,
           meetingId: id,
@@ -318,10 +325,11 @@ const Home = () => {
         {/* Get Link Illustration */}
         <div className="mt-10 flex flex-col items-center">
           <Image
-            src="https://www.gstatic.com/meet/user_edu_get_a_link_light_90698cd7b4ca04d3005c962a3756c42d.svg"
+            src="/assets/home.png"
             alt="Get a link you can share"
-            width={248}
-            height={248}
+            width={400}
+            height={400}
+            className="max-w-full max-h-full rounded-full"
           />
           <h2 className="text-2xl font-semibold text-gray-900 text-center mb-3 mt-10">
             Get a link you can share

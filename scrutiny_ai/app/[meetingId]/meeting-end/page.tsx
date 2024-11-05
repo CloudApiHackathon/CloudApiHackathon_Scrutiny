@@ -4,7 +4,6 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { CallingState, useCallStateHooks } from "@stream-io/video-react-sdk";
 import { Button } from "@/components/ui/button";
-import PlainButton from "@/components/PlainButton";
 import axios from "axios";
 import { useUser } from "@auth0/nextjs-auth0/client";
 
@@ -116,13 +115,12 @@ const MeetingEnd = ({ params, searchParams }: MeetingEndProps) => {
         {/* Action buttons */}
         <div className="flex items-center gap-2">
           {!isInvalidMeeting && (
-            <PlainButton
-              size="sm"
-              className="border px-6"
+            <Button
+              variant={"secondary"}
               onClick={() => router.push(`/${meetingId}`)}
             >
               Rejoin
-            </PlainButton>
+            </Button>
           )}
           <Button size="sm" onClick={() => router.push("/")}>
             Return to home screen
