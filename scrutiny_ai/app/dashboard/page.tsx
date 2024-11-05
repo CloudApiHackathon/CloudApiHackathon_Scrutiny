@@ -108,13 +108,18 @@ const Page = () => {
     }
   };
 
-  const createMeeting = async (id: string, title: string, status: string) => {
+  const createMeeting = async (
+    id: string,
+    title: string,
+    status: string,
+    description?: string
+  ) => {
     try {
       await axios.post(
         `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/meetings/`,
         {
           title,
-          description: title,
+          description: description || "",
           status,
           nanoid: id,
           // date: form.getValues("date") || "",
