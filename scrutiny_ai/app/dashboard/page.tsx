@@ -123,10 +123,26 @@ const Page = () => {
           headers: { Authorization: `Bearer ${user?.accessToken || ""}` },
         }
       );
+    } catch (error) {
+      console.error("Error creating meeting:", error);
+    }
+  };
+
+  const updateParticipantStatus = async (meetingId: string) => {
+    try {
+      await axios.put(
+        `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/participants/${meetingId}`,
+        {
+          status: "STAND_BY",
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${user?.accessToken || ""}`,
+          },
+        }
+      );
     } catch (e) {
-      console.error("Error creating meeting:", e);
-    } finally {
-      setIsCreatingNewMeeting(false);
+      console.error(e);
     }
   };
 
@@ -168,18 +184,31 @@ const Page = () => {
     }
   };
 
-  const onSubmit = async (data: { title: any }) => {
+  const onSubmit = async (data: { title: string }) => {
     try {
+      const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz", 4);
+      const id = `${nanoid(3)}-${nanoid(4)}-${nanoid(3)}`;
       setIsCreatingNewMeeting(true);
-      await createMeeting(
-        customAlphabet("abcdefghijklmnopqrstuvwxyz", 4)(),
-        data.title,
-        "IDLE"
+      await createMeeting(id, data.title, "IDLE");
+      await updateParticipantStatus(id);
+      await axios.post(
+        "/api/invite",
+        {
+          title: data.title,
+          date: form.getValues("date"),
+          participants: emails,
+          meetingId: id,
+        },
+        {
+          headers: { Authorization: `Bearer ${user?.accessToken || ""}` },
+        }
       );
       setIsScheduleOpen(false);
     } catch (e) {
       console.error("Error scheduling meeting:", e);
     } finally {
+      form.reset();
+      setEmails([]);
       setIsCreatingNewMeeting(false);
     }
   };
@@ -268,7 +297,6 @@ const Page = () => {
             </div>
           </div>
 
-          {/* Sidebar */}
           <div className="w-1/4 p-4 flex justify-center mt-10">
             <Calendar
               selected={new Date()}
@@ -312,13 +340,13 @@ const Page = () => {
             <DialogTitle>Your Invitation Link</DialogTitle>
             <DialogDescription>
               <p>Share this link with your team to schedule a meeting later</p>
-              <div className="flex items-center gap-2 mt-4">
-                <div className="p-4 bg-gray-900 text-gray-100 rounded-md font-mono text-sm">
-                  {code}
+              <div className="flex flex-col items-center gap-2 mt-4">
+                <div className="flex w-full max-w-sm items-center space-x-2">
+                  <Input type="text" placeholder="Email" value={code} />
+                  <Button onClick={() => navigator.clipboard.writeText(code)}>
+                    <Copy /> Copy
+                  </Button>
                 </div>
-                <Button onClick={() => navigator.clipboard.writeText(code)}>
-                  <Copy /> Copy
-                </Button>
               </div>
             </DialogDescription>
           </DialogHeader>
