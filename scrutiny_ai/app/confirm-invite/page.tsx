@@ -16,6 +16,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 
 interface Meeting {
+  occurred_at: string | number | Date;
   description: ReactNode;
   created_at: string | number | Date;
   id: string;
@@ -175,7 +176,7 @@ const Page = () => {
                   <CalendarIcon className="mr-1 h-3 w-3 text-gray-500" />
                   <div className="space-y-1">
                     <p className="text-sm font-medium leading-tight text-gray-500">
-                      {new Date(meeting.created_at).toLocaleString("en-US", {
+                      {new Date(meeting.occurred_at ?? meeting.created_at).toLocaleString("en-US", {
                         year: "numeric",
                         month: "long",
                         day: "2-digit",
