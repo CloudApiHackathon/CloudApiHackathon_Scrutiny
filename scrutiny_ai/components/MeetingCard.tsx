@@ -1,9 +1,15 @@
-import { MEETING_ID_REGEX } from "@/contexts/AppProvider";
+"use client";
+import { AppContext, MEETING_ID_REGEX } from "@/contexts/AppProvider";
 import { API_KEY, CALL_TYPE } from "@/contexts/MeetProvider";
 import { Card, CardHeader, CardBody } from "@nextui-org/card";
-import { ErrorFromResponse, StreamVideoClient, User } from "@stream-io/video-react-sdk";
+import {
+  ErrorFromResponse,
+  StreamVideoClient,
+  User,
+} from "@stream-io/video-react-sdk";
 import clsx from "clsx";
 import { useRouter } from "next/navigation";
+import { useContext } from "react";
 
 interface Meeting {
   id: string;
@@ -11,6 +17,7 @@ interface Meeting {
   description: string;
   status: string;
   created_at: string;
+  nanoid: string;
 }
 
 const MeetingCard = ({
@@ -21,6 +28,7 @@ const MeetingCard = ({
   className?: string;
 }) => {
   const router = useRouter();
+  const { setNewMeeting } = useContext(AppContext);
 
   const meetingCardBackground = () => {
     switch (meeting.status) {
@@ -36,7 +44,7 @@ const MeetingCard = ({
   };
 
   const GUEST_USER: User = { id: "guest", type: "guest" };
-  
+
   const handleCodeJoin = async (id: string) => {
     if (!MEETING_ID_REGEX.test(id)) return;
     const client = new StreamVideoClient({
@@ -46,11 +54,11 @@ const MeetingCard = ({
     const call = client.call(CALL_TYPE, id);
     try {
       const response = await call.get();
-      if (response.call)
-          router.push(`/${id}`);
+      if (response.call) router.push(`/${id}`);
     } catch (e) {
       if (e instanceof ErrorFromResponse && e.status === 404) {
-        console.error("Meeting not found");
+        setNewMeeting(true);
+        router.push(`/${id}`);
       }
     }
   };
@@ -64,7 +72,7 @@ const MeetingCard = ({
       )}
       isHoverable
       isPressable
-      onClick={() => handleCodeJoin(meeting.id)}
+      onClick={() => handleCodeJoin(meeting.nanoid)}
     >
       <CardHeader className="border-b border-gray-200 pb-4 mb-2 flex items-center justify-between">
         <h4 className="text-lg font-bold text-gray-800">{meeting.title}</h4>

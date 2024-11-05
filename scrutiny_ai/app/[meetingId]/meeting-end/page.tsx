@@ -116,6 +116,7 @@ const MeetingEnd = ({ params, searchParams }: MeetingEndProps) => {
         <div className="flex items-center gap-2">
           {!isInvalidMeeting && (
             <Button
+              size={"sm"}
               variant={"secondary"}
               onClick={() => router.push(`/${meetingId}`)}
             >
