@@ -101,6 +101,12 @@ const Home = () => {
     }
   }, [error]);
 
+  useEffect(() => {
+    if (!isOpen) {
+      setCode("");
+    }
+  }, [isOpen]);
+
   // Generate a unique meeting ID
   const generateMeetingId = async () => {
     const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz", 4);

@@ -62,6 +62,7 @@ interface Meeting {
   description: string;
   status: string;
   created_at: string;
+  nanoid: string;
 }
 
 // Form Schema
@@ -251,7 +252,6 @@ const Page = () => {
 
         const meetingResponses = await Promise.all(meetingPromises);
         const meetingsData = meetingResponses.map((response) => response.data);
-
         setMeetings(
           meetingsData.filter((meeting: any) => meeting.status !== "END")
         );
