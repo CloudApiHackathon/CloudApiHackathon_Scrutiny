@@ -30,9 +30,27 @@ Deno.serve(async (req) => {
     const supabase = Supabase.getInstance(token);
     const method = req.method;
     const id = req.url.split("/").pop();
-
+    const query = new URL(req.url).searchParams;
+    const nanoid = query.get("nanoid");
+    console.log("nanoid", nanoid);
     switch (method) {
       case "GET": {
+        if (nanoid) {
+          const { data, error } = await supabase
+            .from("meeting")
+            .select("*")
+            .eq("nanoid", nanoid)
+            .single();
+
+          if (error) {
+            return new Response(`Error fetching meeting: ${error.message}`, {
+              status: 500,
+            });
+          }
+          if (!data) return new Response("Meeting not found", { status: 404 });
+
+          return new Response(JSON.stringify(data), { status: 200 });
+        }
         if (id) {
           const { data, error } = await supabase
             .from("meeting")
@@ -86,7 +104,7 @@ Deno.serve(async (req) => {
         const { error } = await supabase
           .from("meeting")
           .update(body)
-          .eq("nanoid", id)
+          .eq("nanoid", id);
 
         if (error) {
           return new Response(`Error updating meeting: ${error.message}`, {

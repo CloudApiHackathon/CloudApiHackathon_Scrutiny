@@ -84,9 +84,6 @@ Deno.serve(async (req) => {
         return new Response(meetingError.message, { status: 500 });
       }
       const body = await req.json();
-      console.log("userId", userData.id);
-      console.log("meetingId", meetingData.id);
-      console.log("body", body);
       const { data, error } = await supabase.from("participant")
         .upsert({
           ...body,
