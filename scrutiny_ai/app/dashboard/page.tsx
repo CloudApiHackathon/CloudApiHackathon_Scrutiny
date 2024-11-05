@@ -63,6 +63,7 @@ interface Meeting {
   status: string;
   created_at: string;
   nanoid: string;
+  occurred_at: string;
 }
 
 // Form Schema
