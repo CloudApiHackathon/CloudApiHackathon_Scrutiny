@@ -1,21 +1,25 @@
-import { NextApiRequest } from "next";
 import { EmailTemplate } from "../../../components/EmailTemplate";
 import { Resend } from "resend";
+import { encodeToken } from "@/utils/auth";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-export async function POST(req: NextApiRequest): Promise<Response> {
+export async function POST(req: Request): Promise<Response> {
     try {
-        const { title, date, participants } = req.body;
+        const { title, date, participants, meetingId } = await req.json();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const emailPromises = participants.map((participant: { email: string; firstName: any; }) => {
+
+        const emailPromises = participants.map((participant: string) => {
+            const state = encodeToken({ meetingId, participant });
+            const inviteLink =
+                `${process.env.AUTH0_BASE_URL}/confirm-invite?code=${state}`;
             return resend.emails.send({
                 from: "Acme <onboarding@resend.dev>",
-                to: [participant.email],
+                to: participant,
                 subject: title,
                 react: EmailTemplate({
-                    firstName: participant.firstName,
-                    inviteLink: "https://example.com/invite",
+                    firstName: "interviewee",
+                    inviteLink: inviteLink,
                     meeting: { title, date },
                 }),
             });
@@ -23,9 +27,11 @@ export async function POST(req: NextApiRequest): Promise<Response> {
 
         const results = await Promise.all(
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            emailPromises.map((p: Promise<any>) => p.catch((e: any) => e)),
+            emailPromises.map((p: Promise<any>) =>
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                p.catch((e: any) => console.error(e))
+            ),
         ); // Handle errors for each promise
-
         for (const result of results) {
             if (result.error) {
                 return Response.json({ error: result.error }, { status: 500 });

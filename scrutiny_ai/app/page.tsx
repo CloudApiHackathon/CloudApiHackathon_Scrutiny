@@ -23,8 +23,6 @@ import axios from "axios";
 import {
   DropdownMenu,
   DropdownMenuSeparator,
-} from "@radix-ui/react-dropdown-menu";
-import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
@@ -39,7 +37,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import Copy from "@/components/icons/Copy";
-import { CalendarIcon, Cross1Icon } from "@radix-ui/react-icons";
+import { CalendarIcon, Cross1Icon, ReloadIcon } from "@radix-ui/react-icons";
 
 import { z } from "zod";
 import {
@@ -81,6 +79,7 @@ const Home = () => {
   const [emails, setEmails] = useState<string[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [checkingCode, setCheckingCode] = useState(false);
+  const [isCreatingNewMeeting, setIsCreatingNewMeeting] = useState(false);
   const [error, setError] = useState("");
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -115,13 +114,18 @@ const Home = () => {
   };
 
   // Create a new meeting
-  const createMeeting = async (id: string, title: string, status: string) => {
+  const createMeeting = async (
+    id: string,
+    title: string,
+    status: string,
+    description?: string
+  ) => {
     try {
       await axios.post(
         `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/meetings/`,
         {
           title,
-          description: title,
+          description: description || "",
           status,
           nanoid: id,
           // date: form.getValues("date") || "",
@@ -132,6 +136,24 @@ const Home = () => {
       );
     } catch (error) {
       console.error("Error creating meeting:", error);
+    }
+  };
+
+  const updateParticipantStatus = async (meetingId: string) => {
+    try {
+      await axios.put(
+        `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/participants/${meetingId}`,
+        {
+          status: "STAND_BY",
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${user?.accessToken || ""}`,
+          },
+        }
+      );
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -152,18 +174,32 @@ const Home = () => {
   };
 
   const handleInstantMeeting = async () => {
-    const id = await generateMeetingId();
-    if (id) {
-      setNewMeeting(true);
-      router.push(`/${id}`);
+    try {
+      setIsCreatingNewMeeting(true);
+      const id = await generateMeetingId();
+      if (id) {
+        setNewMeeting(true);
+        router.push(`/${id}`);
+      }
+    } catch (e) {
+      console.error("Error creating instant meeting:", e);
+    } finally {
+      setIsCreatingNewMeeting(false);
     }
   };
 
   const handleLaterMeeting = async () => {
-    const id = await generateMeetingId();
-    if (id) {
-      setCode(id);
-      setIsOpen(true);
+    try {
+      setIsCreatingNewMeeting(true);
+      const id = await generateMeetingId();
+      if (id) {
+        setCode(id);
+        setIsOpen(true);
+      }
+    } catch (e) {
+      console.error("Error creating later meeting:", e);
+    } finally {
+      setIsCreatingNewMeeting(false);
     }
   };
 
@@ -189,16 +225,34 @@ const Home = () => {
     }
   };
 
-  const onSubmit = async (data: { title: string }) => {
+  const onSubmit = async (data: { title: string; description: string }) => {
     try {
-      await createMeeting(
-        customAlphabet("abcdefghijklmnopqrstuvwxyz", 4)(),
-        data.title,
-        "SCHEDULED"
+      console.log("data", data);
+      const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz", 4);
+      const id = `${nanoid(3)}-${nanoid(4)}-${nanoid(3)}`;
+      setIsCreatingNewMeeting(true);
+      await createMeeting(id, data.title, "IDLE", data.description);
+      await updateParticipantStatus(id);
+      await axios.post(
+        "/api/invite",
+        {
+          title: data.title,
+          description: data.description,
+          date: form.getValues("date"),
+          participants: emails,
+          meetingId: id,
+        },
+        {
+          headers: { Authorization: `Bearer ${user?.accessToken || ""}` },
+        }
       );
       setIsScheduleOpen(false);
     } catch (e) {
       console.error("Error scheduling meeting:", e);
+    } finally {
+      form.reset();
+      setEmails([]);
+      setIsCreatingNewMeeting(false);
     }
   };
 
@@ -228,7 +282,13 @@ const Home = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button>
-                    <Videocall /> New meeting
+                    {isCreatingNewMeeting ? (
+                      <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Videocall /> New meeting
+                      </>
+                    )}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end">
@@ -239,8 +299,9 @@ const Home = () => {
                   <DropdownMenuItem onClick={handleInstantMeeting}>
                     <Plus /> Create instant meeting
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => setIsScheduleOpen(true)}>
-                    <CalendarIcon className="h-3 w-3 ml-1 mr-1"/> Schedule meeting
+                    <CalendarIcon /> Schedule meeting
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -264,10 +325,11 @@ const Home = () => {
         {/* Get Link Illustration */}
         <div className="mt-10 flex flex-col items-center">
           <Image
-            src="https://www.gstatic.com/meet/user_edu_get_a_link_light_90698cd7b4ca04d3005c962a3756c42d.svg"
+            src="/assets/home.png"
             alt="Get a link you can share"
-            width={248}
-            height={248}
+            width={400}
+            height={400}
+            className="max-w-full max-h-full rounded-full"
           />
           <h2 className="text-2xl font-semibold text-gray-900 text-center mb-3 mt-10">
             Get a link you can share
@@ -287,13 +349,13 @@ const Home = () => {
                 <p>
                   Share this link with your team to schedule a meeting later
                 </p>
-                <div className="flex items-center gap-2 mt-4">
-                  <div className="p-4 bg-gray-900 text-gray-100 rounded-md font-mono text-sm">
-                    {code}
+                <div className="flex flex-col items-center gap-2 mt-4">
+                  <div className="flex w-full max-w-sm items-center space-x-2">
+                    <Input type="text" placeholder="Email" value={code} />
+                    <Button onClick={() => navigator.clipboard.writeText(code)}>
+                      <Copy /> Copy
+                    </Button>
                   </div>
-                  <Button onClick={() => navigator.clipboard.writeText(code)}>
-                    <Copy /> Copy
-                  </Button>
                 </div>
               </DialogDescription>
             </DialogHeader>
@@ -414,6 +476,9 @@ const Home = () => {
                   )}
                 />
                 <Button type="submit" className="w-full mt-4">
+                  {isCreatingNewMeeting ? (
+                    <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+                  ) : null}
                   Schedule Meeting
                 </Button>
               </form>
