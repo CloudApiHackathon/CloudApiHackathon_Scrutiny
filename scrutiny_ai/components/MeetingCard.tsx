@@ -1,6 +1,20 @@
 "use client";
+<<<<<<< HEAD
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import clsx from "clsx";
+=======
+import { AppContext, MEETING_ID_REGEX } from "@/contexts/AppProvider";
+import { API_KEY, CALL_TYPE } from "@/contexts/MeetProvider";
+import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
+import {
+  ErrorFromResponse,
+  StreamVideoClient,
+  User,
+} from "@stream-io/video-react-sdk";
+import clsx from "clsx";
+import { useRouter } from "next/navigation";
+import { useContext } from "react";
+>>>>>>> 8355ab9 (temporary assume that bucket is public)
 import { CalendarIcon } from "@radix-ui/react-icons";
 
 interface Meeting {
@@ -42,7 +56,11 @@ const MeetingCard = ({
         className,
         meetingCardBackground()
       )}
+<<<<<<< HEAD
       onClick={() => handleOnClick && handleOnClick(meeting)}
+=======
+      onClick={() => handleCodeJoin(meeting.nanoid)}
+>>>>>>> 8355ab9 (temporary assume that bucket is public)
     >
       <CardHeader className="pb-4 mb-2 flex flex-row items-center justify-between">
         <CardTitle>{meeting.title}</CardTitle>
@@ -78,9 +96,13 @@ const MeetingCard = ({
           <CalendarIcon className="mr-1 h-3 w-3 text-gray-500" />
           <div className="space-y-1">
             <p className="text-sm font-medium leading-tight text-gray-500">
+<<<<<<< HEAD
               {new Date(
                 meeting.occurred_at ?? meeting.created_at
               ).toLocaleString("en-US", {
+=======
+              {new Date(meeting.created_at).toLocaleString("en-US", {
+>>>>>>> 8355ab9 (temporary assume that bucket is public)
                 year: "numeric",
                 month: "long",
                 day: "2-digit",
