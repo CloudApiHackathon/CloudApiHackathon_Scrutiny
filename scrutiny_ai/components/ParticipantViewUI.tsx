@@ -29,6 +29,8 @@ import MicOffFilled from './icons/MicOffFilled';
 import SpeechIndicator from './SpeechIndicator';
 import VisualEffects from './icons/VisualEffects';
 import MoreVert from './icons/MoreVert';
+import MicFilled from './icons/MicFilled';
+
 
 export const speechRingClassName = 'speech-ring';
 export const menuOverlayClassName = 'menu-overlay';
@@ -74,69 +76,15 @@ const ParticipantViewUI = () => {
   return (
     <>
       <ParticipantDetails />
-      {hasAudioTrack && (
-        <div className="absolute top-3.5 right-3.5 w-6.5 h-6.5 flex items-center justify-center bg-primary rounded-full">
-          <SpeechIndicator
-            isSpeaking={isSpeaking}
-            isDominantSpeaker={isDominantSpeaker}
-          />
-        </div>
-      )}
-      {!hasAudioTrack && (
-        <div className="absolute top-4.5 right-3.5 w-6.5 h-6.5 flex items-center justify-center bg-[#2021244d] rounded-full">
-          <MicOffFilled width={18} height={18} />
-        </div>
-      )}
-      {/* Speech Ring */}
-      <div
-        className={clsx(
-          isSpeaking &&
-            hasAudioTrack &&
-            'ring-[5px] ring-inset ring-light-blue',
-          `absolute left-0 top-0 w-full h-full rounded-xl ${speechRingClassName}`
-        )}
-      />
       {/* Menu Overlay */}
       <div
         onMouseOver={() => {
           setShowMenu(true);
         }}
         onMouseOut={() => setShowMenu(false)}
-        className={`absolute z-1 left-0 top-0 w-full h-full rounded-xl bg-transparent ${menuOverlayClassName}`}
+        className={`z-1 left-1/2 top-1/2 w-full h-full rounded-xl bg-transparent ${menuOverlayClassName}`}
+        style={{ transform: 'translate(-50%, -50%)' }}
       />
-      {/* Menu */}
-      <div
-        className={clsx(
-          showMenu ? 'opacity-60' : 'opacity-0',
-          'z-2 absolute left-[calc(50%-66px)] top-[calc(50%-22px)] flex items-center justify-center h-11 transition-opacity duration-300 ease-linear overflow-hidden',
-          'shadow-[0_1px_2px_0px_rgba(0,0,0,0.3),_0_1px_3px_1px_rgba(0,0,0,.15)] bg-meet-black rounded-full h-11 hover:opacity-90'
-        )}
-      >
-        <div className="[&_ul>*:nth-child(n+4)]:hidden">
-          {!pinned && (
-            <MenuToggle
-              strategy="fixed"
-              placement="bottom-start"
-              ToggleButton={PinMenuToggleButton}
-            >
-              <ParticipantActionsContextMenu />
-            </MenuToggle>
-          )}
-          {pinned && (
-            <Button title="Unpin" onClick={unpin} icon={<KeepOffFilled />} />
-          )}
-        </div>
-        <Button title="Apply visual effects" icon={<VisualEffects />} />
-        <div className="[&_ul>*:nth-child(-n+3)]:hidden">
-          <MenuToggle
-            strategy="fixed"
-            placement="bottom-start"
-            ToggleButton={OtherMenuToggleButton}
-          >
-            <ParticipantActionsContextMenu />
-          </MenuToggle>
-        </div>
-      </div>
     </>
   );
 };
@@ -151,16 +99,32 @@ const ParticipantDetails = ({}: Pick<
 
   return (
     <>
-      <div className="z-1 absolute left-0 bottom-[.65rem] max-w-94 h-fit truncate font-medium text-white text-sm flex items-center justify-start gap-4 mt-1.5 mx-4 mb-0 cursor-default select-none">
-        {pinned && (pin.isLocalPin ? <KeepFilled /> : <KeepPublicFilled />)}
-        <span
-          style={{
-            textShadow: '0 1px 2px rgba(0,0,0,.6), 0 0 2px rgba(0,0,0,.3)',
-          }}
-        >
-          {name || userId}
-        </span>
-      </div>
+    <div className="z-1 absolute left-0 bottom-[.65rem] max-w-94 h-fit truncate font-medium text-white text-sm flex items-center justify-start gap-4 mt-1.5 mx-4 mb-0 cursor-default select-none">
+      {pinned && (pin.isLocalPin ? <KeepFilled /> : <KeepPublicFilled />)}
+      <span
+        style={{
+          textShadow: '0 1px 3px rgba(0,0,0,0.7)', // Enhanced shadow for depth
+          display: 'flex',
+          alignItems: 'center', // Center vertically
+          justifyContent: 'center', // Center horizontally
+          border: pinned ? 'none' : '2px solid rgba(255, 255, 255, 0.8)', // Circular border
+          borderRadius: '50%', // Perfect circle
+          width: pinned ? 'auto' : '4rem', // Ensure equal width and height
+          height: pinned ? 'auto' : '4rem', // Ensure equal width and height
+          backgroundColor: pinned ? 'transparent' : 'rgba(255, 255, 255, 0.2)', // Light background when not pinned
+          color: pinned ? 'inherit' : 'rgba(255, 255, 255, 0.9)', // Bright text color
+          transition: 'all 0.3s ease-in-out', // Smooth transition for state changes
+          fontSize: '0.875rem', // Adjust font size to fit inside the circle
+          whiteSpace: 'normal', // Allow text to break lines
+          wordBreak: 'break-word', // Ensure long words break into new lines
+          overflowWrap: 'break-word', // Wrap text to prevent overflow
+          textAlign: 'center', // Center text within the span
+        }}
+      >
+        {name.length > 10 ? name.slice(0, 8) + '...' : name || userId}
+      </span>
+    </div>
+
     </>
   );
 };

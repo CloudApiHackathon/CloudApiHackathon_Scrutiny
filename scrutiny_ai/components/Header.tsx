@@ -171,6 +171,24 @@ const Header = ({ navItems = true, isSidebarOpen = false }: HeaderProps) => {
             >
               Dashboard
             </Button>
+            <Button
+              variant={"ghost"}
+              size="sm"
+              onClick={() => {
+                router.push("/Chat");
+              }}
+            >
+              HR Chat
+            </Button>
+            <Button
+              variant={"ghost"}
+              size="sm"
+              onClick={() => {
+                router.push("/Chat");
+              }}
+            >
+              Evaluation
+            </Button>
           </>
         )}
       </div>

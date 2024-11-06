@@ -6,58 +6,43 @@ import ButtonWithIcon from './ButtonWithIcon';
 import Clipboard from './Clipboard';
 import PersonAdd from './icons/PersonAdd';
 import Popup from './Popup';
-import useLocalStorage from '../hooks/useLocalStorage';
+// Removed useLocalStorage import as it's not needed
+// import useLocalStorage from '../hooks/useLocalStorage';
 
-const MeetingPopup = () => {
+interface InfoPopupProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onOpenChange?: (isOpen: boolean) => void; // Optional, if needed
+}
+
+const InfoPopup = ({ isOpen, onClose, onOpenChange }: InfoPopupProps) => {
   const user = useConnectedUser();
   const call = useCall();
-  const meetingId = call?.id!;
-
-  const [seen, setSeen] = useLocalStorage(`meetingPopupSeen`, {
-    [meetingId]: false,
-  });
+  const InfoId = call?.id!;
 
   const email = user?.custom?.email || user?.name || user?.id;
-  const clipboardValue = window.location.href
-    .replace('http://', '')
-    .replace('https://', '')
-    .replace('/meeting', '');
-
-  const onClose = () => {
-    setSeen({
-      ...seen,
-      [meetingId]: true,
-    });
-  };
+  const clipboardValue = typeof window !== 'undefined'
+    ? window.location.href
+        .replace('http://', '')
+        .replace('https://', '')
+        .replace('/Info', '')
+    : '';
 
   useEffect(() => {
-    setSeen({
-      ...seen,
-      [meetingId]: seen[meetingId] || false,
-    });
-
-    const setSeenTrue = () => {
-      if (seen[meetingId]) return;
-      setSeen({
-        ...seen,
-        [meetingId]: true,
-      });
-    };
-
-    return () => {
-      setSeenTrue();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (onOpenChange) {
+      onOpenChange(isOpen); // Notify parent when the open state changes
+    }
+    // No need to manage 'seen' state here
+  }, [isOpen, onOpenChange]);
 
   return (
     <Popup
-      open={!seen[meetingId]}
+      open={isOpen} // Use the isOpen prop from the parent
       onClose={onClose}
-      title={<h2>Your meeting&apos;s ready</h2>}
-      className="left-4 bottom-0 -translate-y-22.5 animate-popup"
+      title={<h2>Your Info&apos;s ready</h2>}
+      className="bottom-[5rem] right-4 left-auto w-[26%] h-[calc(100svh-6rem)] animate-slideInRight"
     >
-      <div className="p-6 pt-0">
+      <div className="px-4 pb-3 pt-0 h-[calc(100%-66px)]">
         <ButtonWithIcon
           icon={
             <div className="w-6.5 flex items-center justify-start">
@@ -71,7 +56,7 @@ const MeetingPopup = () => {
           Add others
         </ButtonWithIcon>
         <div className="mt-2 text-dark-gray text-sm font-roboto tracking-looserst">
-          Or share this meeting link with others you want in the meeting
+          Or share this Info link with others you want in the Info
         </div>
         <div className="mt-2">
           <Clipboard value={clipboardValue} />
@@ -80,11 +65,11 @@ const MeetingPopup = () => {
           <Image
             width={26}
             height={26}
-            alt="Your meeting is safe"
+            alt="Your Info is safe"
             src="https://www.gstatic.com/meet/security_shield_with_background_2f8144e462c57b3e56354926e0cda615.svg"
           />
           <div className="text-xs font-roboto text-meet-gray tracking-wide">
-            People who use this meeting link must get your permission before
+            People who use this Info link must get your permission before
             they can join.
           </div>
         </div>
@@ -96,4 +81,4 @@ const MeetingPopup = () => {
   );
 };
 
-export default MeetingPopup;
+export default InfoPopup;
