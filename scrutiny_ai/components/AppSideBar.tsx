@@ -1,5 +1,5 @@
 "use client";
-import { Calendar, Home, Archive } from "lucide-react";
+import { Calendar, Home, Archive, Megaphone } from "lucide-react";
 
 import {
   Sidebar,
@@ -33,6 +33,11 @@ const items = [
     title: "Storage",
     url: "/dashboard/storage",
     icon: Archive,
+  },
+  {
+    title: "Result",
+    url: "/dashboard/result",
+    icon: Megaphone,
   },
 ];
 

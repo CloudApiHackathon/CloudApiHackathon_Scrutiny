@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import clsx from "clsx";
-import PlainButton from "./PlainButton";
 import useTime from "../hooks/useTime";
 import UserButton from "./UserButton";
 import { useRouter } from "next/navigation";
@@ -33,7 +32,7 @@ interface Notification {
 const Header = ({ navItems = true, isSidebarOpen = false }: HeaderProps) => {
   const { isLoading, user } = useUser();
   const router = useRouter();
-    const { currentDateTime } = useTime();
+  const { currentDateTime } = useTime();
   const [notification, setNotification] = useState<Notification[]>([]);
   const [hasNewNotifications, setHasNewNotifications] = useState(false);
   const isInitialized = useRef(false); // Track if initialized to prevent duplicate subscriptions
@@ -97,7 +96,7 @@ const Header = ({ navItems = true, isSidebarOpen = false }: HeaderProps) => {
             content = "A new meeting has been scheduled for you";
             break;
           case "UPDATE":
-            content = `Meeting details have been updated ${payload.new.status}`; ;
+            content = `Meeting details have been updated ${payload.new.status}`;
             break;
           case "DELETE":
             content = "A meeting has been canceled";
@@ -180,15 +179,6 @@ const Header = ({ navItems = true, isSidebarOpen = false }: HeaderProps) => {
             >
               HR Chat
             </Button>
-            <Button
-              variant={"ghost"}
-              size="sm"
-              onClick={() => {
-                router.push("/Chat");
-              }}
-            >
-              Evaluation
-            </Button>
           </>
         )}
       </div>
@@ -253,14 +243,14 @@ const Header = ({ navItems = true, isSidebarOpen = false }: HeaderProps) => {
                   <UserButton user={user} />
                 </div>
               ) : (
-                <PlainButton
+                <Button
                   size="sm"
                   onClick={() => {
                     router.push("/api/auth/login");
                   }}
                 >
                   Sign In
-                </PlainButton>
+                </Button>
               )}
             </div>
           </div>

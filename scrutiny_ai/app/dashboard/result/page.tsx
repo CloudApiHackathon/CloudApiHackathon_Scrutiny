@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
+import router from "next/router";
 import clsx from "clsx";
 import { format } from "date-fns";
 import { customAlphabet } from "nanoid";
@@ -50,16 +51,9 @@ import {
 import { Input } from "@/components/ui/input";
 
 // Contexts
+import { AppContext } from "@/contexts/AppProvider";
 import { Badge } from "@/components/ui/badge";
 import { Cross1Icon, ReloadIcon } from "@radix-ui/react-icons";
-import {
-  ErrorFromResponse,
-  StreamVideoClient,
-  User,
-} from "@stream-io/video-react-sdk";
-
-import { AppContext, MEETING_ID_REGEX } from "@/contexts/AppProvider";
-import { API_KEY, CALL_TYPE } from "@/contexts/MeetProvider";
 import { useRouter } from "next/navigation";
 
 // Interfaces
@@ -80,8 +74,6 @@ const formSchema = z.object({
   date: z.date(),
   participants: z.array(z.string()),
 });
-
-const GUEST_USER: User = { id: "guest", type: "guest" };
 
 const Page = () => {
   const { user, isLoading } = useUser();
@@ -201,24 +193,6 @@ const Page = () => {
     }
   };
 
-  const handleCodeJoin = async (meeting: Meeting) => {
-    if (!MEETING_ID_REGEX.test(meeting.nanoid)) return;
-    const client = new StreamVideoClient({
-      apiKey: API_KEY,
-      user: GUEST_USER,
-    });
-    const call = client.call(CALL_TYPE, meeting.nanoid);
-    try {
-      const response = await call.get();
-      if (response.call) router.push(`/${meeting.nanoid}`);
-    } catch (e) {
-      if (e instanceof ErrorFromResponse && e.status === 404) {
-        setNewMeeting(true);
-        router.push(`/${meeting.nanoid}`);
-      }
-    }
-  };
-
   const onSubmit = async (data: { title: string }) => {
     try {
       const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz", 4);
@@ -246,6 +220,10 @@ const Page = () => {
       setEmails([]);
       setIsCreatingNewMeeting(false);
     }
+  };
+
+  const handleOnClick = (meeting: Meeting) => {
+    router.push(`/dashboard/result/${meeting.id}`);
   };
 
   // Fetch Meetings
@@ -295,6 +273,7 @@ const Page = () => {
   }, [user?.accessToken]);
 
   // JSX
+
   return (
     <div
       className={clsx(
@@ -309,7 +288,7 @@ const Page = () => {
           <div className="flex-grow p-4 bg-white">
             <div className="flex flex-col items-start justify-center h-auto p-6 overflow-y-auto">
               <h1 className="text-2xl font-semibold text-gray-600 dark:text-gray-300">
-                Upcoming Meetings
+                Result
               </h1>
               <div className="mt-10 w-full h-full flex-1 justify-center items-center">
                 {isMeetingLoading ? (
@@ -323,25 +302,13 @@ const Page = () => {
                         key={meeting.id}
                         meeting={meeting}
                         className="w-full"
-                        handleOnClick={() => handleCodeJoin(meeting)}
+                        handleOnClick={handleOnClick}
                       />
                     ))}
                   </div>
                 )}
               </div>
             </div>
-          </div>
-
-          <div className="w-1/4 p-4 flex justify-center mt-10">
-            <Calendar
-              selected={new Date()}
-              mode="single"
-              style={{
-                borderRadius: "1rem",
-                boxShadow: "0 0 10px rgba(0, 0, 0, 0.1)",
-                height: "fit-content",
-              }}
-            />
           </div>
         </div>
       </div>
