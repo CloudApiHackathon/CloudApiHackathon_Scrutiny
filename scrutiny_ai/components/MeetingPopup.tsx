@@ -1,12 +1,11 @@
-import Image from 'next/image';
-import { useEffect } from 'react';
-import { useCall, useConnectedUser } from '@stream-io/video-react-sdk';
-
-import ButtonWithIcon from './ButtonWithIcon';
-import Clipboard from './Clipboard';
-import PersonAdd from './icons/PersonAdd';
-import Popup from './Popup';
-import useLocalStorage from '../hooks/useLocalStorage';
+import Image from "next/image";
+import { useEffect } from "react";
+import { useCall, useConnectedUser } from "@stream-io/video-react-sdk";
+import Clipboard from "./Clipboard";
+import PersonAdd from "./icons/PersonAdd";
+import Popup from "./Popup";
+import useLocalStorage from "../hooks/useLocalStorage";
+import { Button } from "./ui/button";
 
 const MeetingPopup = () => {
   const user = useConnectedUser();
@@ -19,9 +18,9 @@ const MeetingPopup = () => {
 
   const email = user?.custom?.email || user?.name || user?.id;
   const clipboardValue = window.location.href
-    .replace('http://', '')
-    .replace('https://', '')
-    .replace('/meeting', '');
+    .replace("http://", "")
+    .replace("https://", "")
+    .replace("/meeting", "");
 
   const onClose = () => {
     setSeen({
@@ -58,18 +57,10 @@ const MeetingPopup = () => {
       className="left-4 bottom-0 -translate-y-22.5 animate-popup"
     >
       <div className="p-6 pt-0">
-        <ButtonWithIcon
-          icon={
-            <div className="w-6.5 flex items-center justify-start">
-              <PersonAdd />
-            </div>
-          }
-          rounding="lg"
-          size="sm"
-          variant="secondary"
-        >
+        <Button size="sm">
+          <PersonAdd />
           Add others
-        </ButtonWithIcon>
+        </Button>
         <div className="mt-2 text-dark-gray text-sm font-roboto tracking-looserst">
           Or share this meeting link with others you want in the meeting
         </div>

@@ -15,7 +15,7 @@ import { GUEST_ID, tokenProvider } from "@/contexts/MeetProvider";
 import { useUser } from "@auth0/nextjs-auth0/client";
 
 import { AppContext, MEETING_ID_REGEX } from "@/contexts/AppProvider";
-import Button from "@/components/Button";
+import { Button } from "@/components/ui/button";
 import CallParticipants from "@/components/CallParticipants";
 import Header from "@/components/Header";
 import MeetingPreview from "@/components/MeetingPreview";
@@ -237,7 +237,6 @@ const Lobby = () => {
                 className="w-60 text-sm"
                 onClick={joinCall}
                 disabled={isGuest && !guestName}
-                rounding="lg"
               >
                 Join now
               </Button>

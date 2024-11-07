@@ -1,11 +1,11 @@
-import Image from 'next/image';
-import { useEffect } from 'react';
-import { useCall, useConnectedUser } from '@stream-io/video-react-sdk';
+import Image from "next/image";
+import { useEffect } from "react";
+import { useCall, useConnectedUser } from "@stream-io/video-react-sdk";
 
-import ButtonWithIcon from './ButtonWithIcon';
-import Clipboard from './Clipboard';
-import PersonAdd from './icons/PersonAdd';
-import Popup from './Popup';
+import Clipboard from "./Clipboard";
+import PersonAdd from "./icons/PersonAdd";
+import Popup from "./Popup";
+import { Button } from "./ui/button";
 // Removed useLocalStorage import as it's not needed
 // import useLocalStorage from '../hooks/useLocalStorage';
 
@@ -21,12 +21,13 @@ const InfoPopup = ({ isOpen, onClose, onOpenChange }: InfoPopupProps) => {
   const InfoId = call?.id!;
 
   const email = user?.custom?.email || user?.name || user?.id;
-  const clipboardValue = typeof window !== 'undefined'
-    ? window.location.href
-        .replace('http://', '')
-        .replace('https://', '')
-        .replace('/Info', '')
-    : '';
+  const clipboardValue =
+    typeof window !== "undefined"
+      ? window.location.href
+          .replace("http://", "")
+          .replace("https://", "")
+          .replace("/Info", "")
+      : "";
 
   useEffect(() => {
     if (onOpenChange) {
@@ -43,18 +44,10 @@ const InfoPopup = ({ isOpen, onClose, onOpenChange }: InfoPopupProps) => {
       className="bottom-[5rem] right-4 left-auto w-[26%] h-[calc(100svh-6rem)] animate-slideInRight"
     >
       <div className="px-4 pb-3 pt-0 h-[calc(100%-66px)]">
-        <ButtonWithIcon
-          icon={
-            <div className="w-6.5 flex items-center justify-start">
-              <PersonAdd />
-            </div>
-          }
-          rounding="lg"
-          size="sm"
-          variant="secondary"
-        >
+        <Button size="sm">
+          <PersonAdd />
           Add others
-        </ButtonWithIcon>
+        </Button>
         <div className="mt-2 text-dark-gray text-sm font-roboto tracking-looserst">
           Or share this Info link with others you want in the Info
         </div>
@@ -69,8 +62,8 @@ const InfoPopup = ({ isOpen, onClose, onOpenChange }: InfoPopupProps) => {
             src="https://www.gstatic.com/meet/security_shield_with_background_2f8144e462c57b3e56354926e0cda615.svg"
           />
           <div className="text-xs font-roboto text-meet-gray tracking-wide">
-            People who use this Info link must get your permission before
-            they can join.
+            People who use this Info link must get your permission before they
+            can join.
           </div>
         </div>
         <div className="text-xs font-roboto text-meet-gray tracking-wide">
