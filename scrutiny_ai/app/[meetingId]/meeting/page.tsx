@@ -31,6 +31,7 @@ import ToggleAudioButton from "@/components/ToggleAudioButton";
 import ToggleVideoButton from "@/components/ToggleVideoButton";
 import useTime from "@/hooks/useTime";
 import Widget from "@/components/icons/widget";
+import CodeLayout from "@/components/CodeLayout";
 
 interface MeetingProps {
   params: {
@@ -90,6 +91,9 @@ const Meeting = ({ params }: MeetingProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router, meetingId, isUnkownOrIdle, chatClient]);
 
+  // State for CodeEditor
+  const [isCodeEditorOpen, setIsCodeEditorOpen] = useState(false);
+
   const isSpeakerLayout = useMemo(() => {
     if (participantInSpotlight) {
       return (
@@ -127,8 +131,9 @@ const Meeting = ({ params }: MeetingProps) => {
           openPopup ? 'layout-adjusted' : ''
         }`}
       >
-        {isSpeakerLayout && <SpeakerLayout />}
-        {!isSpeakerLayout && <GridLayout />}
+        {!isCodeEditorOpen && isSpeakerLayout && <SpeakerLayout />}
+        {!isCodeEditorOpen && !isSpeakerLayout && <GridLayout />}
+        {isCodeEditorOpen && <CodeLayout setIsCodeEditorOpen={setIsCodeEditorOpen}/>}
         <div className="absolute left-0 bottom-0 right-0 w-full h-20 bg-meet-black text-white text-center flex items-center justify-between">
           {/* Meeting ID */}
           <div className="hidden sm:flex grow shrink basis-1/4 items-center text-start justify-start ml-3 truncate max-w-full">
@@ -206,6 +211,7 @@ const Meeting = ({ params }: MeetingProps) => {
           <WidgetPopup
             isOpen={true}
             onClose={() => setOpenPopup(null)}
+            setIsCodeEditorOpen={setIsCodeEditorOpen}
           />
         )}
         {isCreator && <MeetingPopup />}

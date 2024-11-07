@@ -10,9 +10,10 @@ interface WidgetPopupProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenChange?: (isOpen: boolean) => void; // New prop to inform parent about open state
+  setIsCodeEditorOpen: (isOpen: boolean) => void;
 }
 
-const WidgetPopup = ({ isOpen, onClose, onOpenChange }: WidgetPopupProps) => {
+const WidgetPopup = ({ isOpen, onClose, onOpenChange, setIsCodeEditorOpen }: WidgetPopupProps) => {
   const router = useRouter();
   const [isWhiteboardOpen, setIsWhiteboardOpen] = useState(false); // State for WhiteboardPopup
 
@@ -30,8 +31,9 @@ const WidgetPopup = ({ isOpen, onClose, onOpenChange }: WidgetPopupProps) => {
       case 'Chatbot':
         router.push('/chatbot');
         break;
-      case 'Coding':
-        router.push('/coding');
+      case 'Code':
+        onClose();
+        setIsCodeEditorOpen(true);
         break;
       default:
         console.log('No action defined.');
