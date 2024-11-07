@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -12,25 +12,25 @@ import {
 } from "@stream-io/video-react-sdk";
 import { Channel } from "stream-chat";
 import { DefaultStreamChatGenerics, useChatContext } from "stream-chat-react";
-
 import CallControlButton from "@/components/CallControlButton";
 import CallInfoButton from "@/components/CallInfoButton";
 import CallEndFilled from "@/components/icons/CallEndFilled";
 import Chat from "@/components/icons/Chat";
 import ChatFilled from "@/components/icons/ChatFilled";
 import ChatPopup from "@/components/ChatPopup";
+import GroupPopup from "@/components/GroupPopup";
+import InfoPopup from "@/components/InfoPopup";
+import WidgetPopup from "@/components/WidgetPopup";
 import GridLayout from "@/components/GridLayout";
+import SpeakerLayout from "@/components/SpeakerLayout";
 import Group from "@/components/icons/Group";
 import Info from "@/components/icons/Info";
 import PresentToAll from "@/components/icons/PresentToAll";
 import MeetingPopup from "@/components/MeetingPopup";
-import MoreVert from "@/components/icons/MoreVert";
-import RecordingsPopup from "@/components/RecordingsPopup";
-import SpeakerLayout from "@/components/SpeakerLayout";
 import ToggleAudioButton from "@/components/ToggleAudioButton";
 import ToggleVideoButton from "@/components/ToggleVideoButton";
 import useTime from "@/hooks/useTime";
-import Record from "@/components/icons/Record";
+import Widget from "@/components/icons/widget";
 
 interface MeetingProps {
   params: {
@@ -54,33 +54,41 @@ const Meeting = ({ params }: MeetingProps) => {
 
   const [chatChannel, setChatChannel] =
     useState<Channel<DefaultStreamChatGenerics>>();
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [isRecordingListOpen, setIsRecordingListOpen] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [participantInSpotlight, _] = participants;
   const [prevParticipantsCount, setPrevParticipantsCount] = useState(0);
   const isCreator = call?.state.createdBy?.id === user?.id;
   const isUnkownOrIdle =
     callingState === CallingState.UNKNOWN || callingState === CallingState.IDLE;
 
+  // Use a single state variable for open popups
+  const [openPopup, setOpenPopup] = useState<
+    null | 'chat' | 'info' | 'group' | 'widget'
+  >(null);
+
+  // Participant in Spotlight
+  const participantInSpotlight = participants.length > 0 ? participants[0] : null;
+
+  // Effect for participant changes
+  useEffect(() => {
+    if (participants.length > prevParticipantsCount) {
+      audioRef.current?.play();
+    }
+    setPrevParticipantsCount(participants.length);
+  }, [participants.length, prevParticipantsCount]);
+
+  // Effect for initializing chat channel
   useEffect(() => {
     const startup = async () => {
       if (isUnkownOrIdle) {
         router.push(`/${meetingId}`);
-      } else if (chatClient) {
+      } else if (chatClient && !chatChannel) {
         const channel = chatClient.channel("messaging", meetingId);
         setChatChannel(channel);
       }
     };
     startup();
+    // Exclude chatChannel from dependencies to prevent infinite loop
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router, meetingId, isUnkownOrIdle, chatClient]);
-
-  useEffect(() => {
-    if (participants.length > prevParticipantsCount) {
-      audioRef.current?.play();
-      setPrevParticipantsCount(participants.length);
-    }
-  }, [participants.length, prevParticipantsCount]);
 
   const isSpeakerLayout = useMemo(() => {
     if (participantInSpotlight) {
@@ -105,27 +113,20 @@ const Meeting = ({ params }: MeetingProps) => {
     }
   };
 
-  const toggleRecord = async () => {
-    try {
-      await call?.startRecording();
-    } catch (error) {
-      console.error(error);
-    }
-  }
-
-  const toggleChatPopup = () => {
-    setIsChatOpen((prev) => !prev);
-  };
-
-  const toggleRecordingsList = () => {
-    setIsRecordingListOpen((prev) => !prev);
+  // Toggle function for popups
+  const togglePopup = (popupName: 'chat' | 'info' | 'group' | 'widget') => {
+    setOpenPopup((current) => (current === popupName ? null : popupName));
   };
 
   if (isUnkownOrIdle) return null;
 
   return (
     <StreamTheme className="root-theme">
-      <div className="relative w-svw h-svh bg-meet-black overflow-hidden">
+      <div
+        className={`relative w-full h-svh bg-meet-black overflow-hidden ${
+          openPopup ? 'layout-adjusted' : ''
+        }`}
+      >
         {isSpeakerLayout && <SpeakerLayout />}
         {!isSpeakerLayout && <GridLayout />}
         <div className="absolute left-0 bottom-0 right-0 w-full h-20 bg-meet-black text-white text-center flex items-center justify-between">
@@ -147,22 +148,6 @@ const Meeting = ({ params }: MeetingProps) => {
               title={"Present now"}
             />
             <CallControlButton
-              icon={<Record />}
-              onClick={toggleRecord}
-              title={"Turn on captions"}
-            />
-            <div className="hidden sm:block relative">
-              <CallControlButton
-                onClick={toggleRecordingsList}
-                icon={<MoreVert />}
-                title={"View recording list"}
-              />
-              <RecordingsPopup
-                isOpen={isRecordingListOpen}
-                onClose={() => setIsRecordingListOpen(false)}
-              />
-            </div>
-            <CallControlButton
               onClick={leaveCall}
               icon={<CallEndFilled />}
               title={"Leave call"}
@@ -171,22 +156,58 @@ const Meeting = ({ params }: MeetingProps) => {
           </div>
           {/* Meeting Info */}
           <div className="hidden sm:flex grow shrink basis-1/4 items-center justify-end mr-3">
-            <CallInfoButton icon={<Info />} title="Meeting details" />
-            <CallInfoButton icon={<Group />} title="People" />
             <CallInfoButton
-              onClick={toggleChatPopup}
+              onClick={() => togglePopup('info')}
+              icon={<Info />}
+              title="Meeting details"
+            />
+            <CallInfoButton
+              onClick={() => togglePopup('group')}
+              icon={<Group />}
+              title="People"
+            />
+            <CallInfoButton
+              onClick={() => togglePopup('chat')}
               icon={
-                isChatOpen ? <ChatFilled color="var(--icon-blue)" /> : <Chat />
+                openPopup === 'chat' ? (
+                  <ChatFilled/>
+                ) : (<Chat />)
               }
               title="Chat with everyone"
             />
+            <CallInfoButton
+              onClick={() => togglePopup('widget')}
+              icon={<Widget />}
+              title="Tools and widgets"
+            />
           </div>
         </div>
-        <ChatPopup
-          channel={chatChannel!}
-          isOpen={isChatOpen}
-          onClose={() => setIsChatOpen(false)}
-        />
+        {/* Popups */}
+        {openPopup === 'info' && (
+          <InfoPopup
+            isOpen={true}
+            onClose={() => setOpenPopup(null)}
+          />
+        )}
+        {openPopup === 'group' && (
+          <GroupPopup
+            isOpen={true}
+            onClose={() => setOpenPopup(null)}
+          />
+        )}
+        {openPopup === 'chat' && chatChannel && (
+          <ChatPopup
+            channel={chatChannel}
+            isOpen={true}
+            onClose={() => setOpenPopup(null)}
+          />
+        )}
+        {openPopup === 'widget' && (
+          <WidgetPopup
+            isOpen={true}
+            onClose={() => setOpenPopup(null)}
+          />
+        )}
         {isCreator && <MeetingPopup />}
         <audio
           ref={audioRef}
