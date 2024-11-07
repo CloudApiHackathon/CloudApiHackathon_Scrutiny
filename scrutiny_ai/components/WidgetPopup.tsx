@@ -5,6 +5,7 @@ import EditNote from './icons/EditNote';
 import Robot from './icons/Robot';
 import Code from './icons/Code';
 import WhiteboardPopup from "./WhiteBoardPopup";
+import ChatBotPopup from "./ChatBotPopup";
 
 interface WidgetPopupProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ interface WidgetPopupProps {
 const WidgetPopup = ({ isOpen, onClose, onOpenChange, setIsCodeEditorOpen }: WidgetPopupProps) => {
   const router = useRouter();
   const [isWhiteboardOpen, setIsWhiteboardOpen] = useState(false); // State for WhiteboardPopup
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false); // State for ChatbotPopup
 
   useEffect(() => {
     if (onOpenChange) {
@@ -29,7 +31,7 @@ const WidgetPopup = ({ isOpen, onClose, onOpenChange, setIsCodeEditorOpen }: Wid
         setIsWhiteboardOpen(true); // Open WhiteboardPopup
         break;
       case 'Chatbot':
-        router.push('/chatbot');
+        setIsChatbotOpen(true); // Open ChatbotPopup
         break;
       case 'Code':
         onClose();
@@ -92,8 +94,15 @@ const WidgetPopup = ({ isOpen, onClose, onOpenChange, setIsCodeEditorOpen }: Wid
       {isWhiteboardOpen && (
         <WhiteboardPopup
           isOpen={isWhiteboardOpen}
-          onClose={() => setIsWhiteboardOpen(false)} // Close WhiteboardPopup
-          onOpenChange={(state) => setIsWhiteboardOpen(state)} // Optionally notify parent about state changes
+          onClose={() => setIsWhiteboardOpen(false)}
+          onOpenChange={(state) => setIsWhiteboardOpen(state)}
+        />
+      )}
+      {isChatbotOpen && (
+        <ChatBotPopup
+          isOpen={isChatbotOpen}
+          onClose={() => setIsChatbotOpen(false)}
+          onOpenChange={(state) => setIsChatbotOpen(state)}
         />
       )}
     </>

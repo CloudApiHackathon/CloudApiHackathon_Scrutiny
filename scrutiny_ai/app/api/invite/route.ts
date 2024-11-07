@@ -31,9 +31,14 @@ export async function POST(req: Request): Promise<Response> {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 p.catch((e: any) => console.error(e))
             ),
+
         ); // Handle errors for each promise
+        
+        console.error("Error sending emails:", results)
+
         for (const result of results) {
             if (result.error) {
+                console.error("Error sending emails:", result);
                 return Response.json({ error: result.error }, { status: 500 });
             }
         }
@@ -43,6 +48,7 @@ export async function POST(req: Request): Promise<Response> {
             status: 200,
         });
     } catch (error) {
+        console.error("Error sending emails:", error);
         return Response.json({ error }, { status: 500 });
     }
 }

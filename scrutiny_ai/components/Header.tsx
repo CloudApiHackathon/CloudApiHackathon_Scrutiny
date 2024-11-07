@@ -174,7 +174,7 @@ const Header = ({ navItems = true, isSidebarOpen = false }: HeaderProps) => {
               variant={"ghost"}
               size="sm"
               onClick={() => {
-                router.push("/Chat");
+                router.push("/hrchat");
               }}
             >
               HR Chat
