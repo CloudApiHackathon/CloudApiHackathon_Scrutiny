@@ -1,11 +1,53 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useContext, useEffect, useState } from "react";
 import { useUser } from "@auth0/nextjs-auth0/client";
+import { useForm, FormProvider } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
+import router from "next/router";
 import clsx from "clsx";
+import { format } from "date-fns";
+import { customAlphabet } from "nanoid";
 
 // Components
 import Header from "@/components/Header";
+import MeetingCard from "@/components/MeetingCard";
+import Spinner from "@/components/Spinner";
+import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@/components/ui/button";
+import Plus from "@/components/icons/Plus";
+import Url from "@/components/icons/Url";
+import { CalendarIcon, Copy } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@radix-ui/react-dropdown-menu";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@radix-ui/react-popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormDescription,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 
 // Contexts
 import { AppContext } from "@/contexts/AppProvider";
@@ -19,48 +61,94 @@ interface Meeting {
   created_at: string;
 }
 
+// Form Schema
+const formSchema = z.object({
+  title: z.string(),
+  description: z.string(),
+  date: z.date(),
+  participants: z.array(z.string()),
+});
+
 const Page = () => {
   const { user, isLoading } = useUser();
   const { setNewMeeting } = useContext(AppContext);
 
   // State
   const [isMeetingLoading, setIsMeetingLoading] = useState(true);
-  const [isIframeLoaded, setIsIframeLoaded] = useState(false);
+  const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [code, setCode] = useState("");
   const [meetings, setMeetings] = useState<Meeting[]>([]);
 
+  // Form
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      date: undefined,
+      participants: [],
+    }
+  });
+
   // Functions
-  const postMessage = async (message: string) => {
+  const generateMeetingId = async () => {
+    const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz", 4);
+    const id = `${nanoid(3)}-${nanoid(4)}-${nanoid(3)}`;
     try {
-      const response = await fetch(`https://www.chatbase.co/api/v1/chat`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_CHATBASE_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messages: [
-            { content: message, role: 'user' }
-          ],
-          chatbotId: '8DkomxbxIgCwr5feRjfAv',  // Replace with your actual chatbot ID
-          stream: false,
-          model: 'gpt-3.5-turbo',
-          temperature: 0,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message);
-      }
-
-      const data = await response.json();
-      console.log("Response from Chatbot:", data); // Debug output
-    } catch (error) {
-      console.error("Error posting message:", error);
+      await createMeeting(id, "Instant meeting", "IDLE");
+      return id;
+    } catch (e) {
+      console.error("Error generating meeting ID:", e);
     }
   };
 
-  // Fetch Chatbot and meetings data
+  const createMeeting = async (id: string, title: string, status: string) => {
+    await axios.post(
+      `${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/meetings/`,
+      {
+        title,
+        description: title,
+        status,
+        nanoid: id,
+        date: form.getValues("date") || "",
+      },
+      {
+        headers: { Authorization: `Bearer ${user?.accessToken || ""}` },
+      }
+    );
+  };
+
+  const handleInstantMeeting = async () => {
+    const id = await generateMeetingId();
+    if (id) {
+      setNewMeeting(true);
+      router.push(`/${id}`);
+    }
+  };
+
+  const handleLaterMeeting = async () => {
+    const id = await generateMeetingId();
+    if (id) {
+      setCode(id);
+      setIsOpen(true);
+    }
+  };
+
+  const onSubmit = async (data: { title: any }) => {
+    try {
+      await createMeeting(
+        customAlphabet("abcdefghijklmnopqrstuvwxyz", 4)(),
+        data.title,
+        "SCHEDULED"
+      );
+      setIsScheduleOpen(false);
+    } catch (e) {
+      console.error("Error scheduling meeting:", e);
+    }
+  };
+
+  // Fetch Meetings
   useEffect(() => {
     const fetchParticipants = async () => {
       try {
@@ -98,7 +186,7 @@ const Page = () => {
           meetingsData.filter((meeting: any) => meeting.status !== "END")
         );
       } catch (error) {
-        console.error("Error fetching participants:", error);
+        console.error(error);
       } finally {
         setIsMeetingLoading(false);
       }
@@ -106,14 +194,6 @@ const Page = () => {
 
     fetchParticipants();
   }, [user?.accessToken]);
-
-  // Trigger postMessage after iframe load
-  useEffect(() => {
-    if (isIframeLoaded) {
-      console.log("Iframe loaded, sending message...");
-      postMessage("Your message after chatbot loads");
-    }
-  }, [isIframeLoaded]); // Depend on `isIframeLoaded`
 
   return (
     <div
@@ -131,7 +211,7 @@ const Page = () => {
             src="https://www.chatbase.co/chatbot-iframe/8DkomxbxIgCwr5feRjfAv"
             width="100%"
             style={{ height: "100%", minHeight: "700px" }}
-            onLoad={() => setIsIframeLoaded(true)}
+            frameBorder="0"
           ></iframe>
         </main>
       </div>
