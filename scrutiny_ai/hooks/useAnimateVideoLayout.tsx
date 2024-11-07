@@ -23,7 +23,7 @@ type PreviousValues = Map<
 
 gsap.registerPlugin(useGSAP);
 
-const useAnimateVideoLayout = (isSpeakerLayout: boolean) => {
+const useAnimateVideoLayout = (isSpeakerLayout: boolean = false) => {
   const previousRef = useRef<PreviousValues>(new Map());
   const ref = useRef<HTMLDivElement>(null);
 
@@ -31,7 +31,7 @@ const useAnimateVideoLayout = (isSpeakerLayout: boolean) => {
     (_, contextSafe) => {
       if (!ref.current) return;
 
-      const container = (
+      let container = (
         isSpeakerLayout
           ? ref.current!.querySelector(
               '.str-video__speaker-layout__participants-bar'
@@ -46,7 +46,7 @@ const useAnimateVideoLayout = (isSpeakerLayout: boolean) => {
           ref.current!.querySelectorAll('.str-video__participant-view')
         );
 
-        const layout = ref.current as HTMLElement;
+        let layout = ref.current as HTMLElement;
 
         items.forEach((item, index) => {
           const { left, top, width, height } = item.getBoundingClientRect();

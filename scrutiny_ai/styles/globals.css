@@ -164,6 +164,28 @@ body {
     @apply overflow-y-hidden min-[896px]:flex min-[896px]:justify-center min-[896px]:items-center min-[896px]:w-full;
   }
 
+  .root-theme {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    overflow: hidden; /* Prevents overflow */
+  }
+  
+  .root-theme .str-video__paginated-grid-layout {
+    flex: 1; /* Makes the video grid take the available space */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: transform 0.3s ease-in-out, max-width 0.3s ease-in-out; /* Smooth transition */
+    max-width: 100%; /* Normal size */
+  }
+  
+  .layout-adjusted .str-video__paginated-grid-layout {
+    transform: scale(0.8) translateX(-20px); /* Adjust size and position */
+    max-width: calc(100% - 20%); /* Reduce width when the popup is open */
+  }
+  
+
   .root-theme .str-video__paginated-grid-layout .str-video__paginated-grid-layout__group,
   .root-theme .spotlight {
     max-width: 1316px;
@@ -171,6 +193,7 @@ body {
     padding: 0;
     gap: 12px;
     position: relative;
+    margin: auto; /* Center the element horizontally */
   }
 
   .root-theme .str-video__paginated-grid-layout .str-video__paginated-grid-layout__group:has(> .str-video__participant-view:first-child:nth-last-child(2)) {
@@ -308,6 +331,29 @@ body {
     }
 }
 
+@keyframes slideInLeft {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  0% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
@@ -321,4 +367,152 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .custom-message-ui {
+    --cmui-gap-size: 0.5rem;
+    --cmui-inline-spacing: 2rem;
+    --cmui-block-spacing: 0.5rem;
+  
+    display: flex;
+    gap: var(--cmui-gap-size);
+    padding-inline: var(--cmui-inline-spacing);
+    padding-block: var(--cmui-block-spacing);
+  }
+  
+  .custom-message-ui__name {
+    display: flex;
+    gap: var(--cmui-gap-size);
+  }
+  
+  .custom-message-ui--mine .custom-message-ui__name::before {
+    content: '<';
+  }
+  
+  .custom-message-ui--other .custom-message-ui__name::after {
+    content: '>';
+  }
+  
+  .custom-message-ui--mine {
+    flex-direction: row-reverse;
+    text-align: right;
+  }
+  
+  /* #root {
+    margin: unset;
+    padding: unset;
+    height: 100%;
+  }
+
+  #root {
+    display: flex;
+    height: 100%;
+
+    .str-chat__channel-list {
+      position: fixed;
+      z-index: 1;
+      height: 100%;
+      width: 0;
+      flex-shrink: 0;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.15);
+
+      &--open {
+        width: 30%;
+        position: fixed;
+      }
+      transition: width 0.3s ease-out;
+    }
+
+    .str-chat__channel {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .str-chat__main-panel {
+      min-width: 0;
+      flex: 1;
+
+      &--thread-open {
+        display: none;
+      }
+    }
+
+    .str-chat__thread {
+      flex: 1;
+      height: 100%;
+      position: fixed;
+      z-index: 1;
+    }
+
+    .str-chat__channel-header .str-chat__header-hamburger {
+      width: 30px;
+      height: 38px;
+      padding: var(--xxs-p);
+      margin-right: var(--xs-m);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+
+      &:hover {
+        svg path {
+          fill: var(--primary-color);
+        }
+      }
+    }
+
+    @media screen and (min-width: 768px) {
+      .str-chat__channel-list {
+        width: 30%;
+        position: initial;
+        z-index: 0;
+      }
+
+      .str-chat__thread {
+        position: initial;
+        z-index: 0;
+      }
+
+      .str-chat__channel-header .str-chat__header-hamburger {
+        display: none;
+      }
+    }
+
+    @media screen and (min-width: 1024px) {
+      .str-chat__main-panel {
+        min-width: 0;
+
+        &--thread-open {
+          max-width: 55%;
+          display: flex;
+        }
+      }
+
+      .str-chat__thread {
+        max-width: 45%;
+      }
+
+      .str-chat__channel-header .str-chat__header-hamburger {
+        display: none;
+      }
+    }
+  } */
 }
+
+

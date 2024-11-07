@@ -14,10 +14,10 @@ import Header from "@/components/Header";
 import Videocall from "@/components/icons/Videocall";
 import {
   ErrorFromResponse,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   GetCallResponse,
   StreamVideoClient,
   User,
+  
 } from "@stream-io/video-react-sdk";
 import axios from "axios";
 import {
@@ -210,6 +210,7 @@ const Home = () => {
       apiKey: API_KEY,
       user: GUEST_USER,
     });
+
     const call = client.call(CALL_TYPE, code);
     try {
       const response = await call.get();
