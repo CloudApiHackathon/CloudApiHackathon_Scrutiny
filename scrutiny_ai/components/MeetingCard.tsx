@@ -1,15 +1,6 @@
 "use client";
-import { AppContext, MEETING_ID_REGEX } from "@/contexts/AppProvider";
-import { API_KEY, CALL_TYPE } from "@/contexts/MeetProvider";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
-import {
-  ErrorFromResponse,
-  StreamVideoClient,
-  User,
-} from "@stream-io/video-react-sdk";
 import clsx from "clsx";
-import { useRouter } from "next/navigation";
-import { useContext } from "react";
 import { CalendarIcon } from "@radix-ui/react-icons";
 
 interface Meeting {
@@ -25,13 +16,12 @@ interface Meeting {
 const MeetingCard = ({
   meeting,
   className,
+  handleOnClick,
 }: {
   meeting: Meeting;
   className?: string;
+  handleOnClick?: (meeting: Meeting) => void;
 }) => {
-  const router = useRouter();
-  const { setNewMeeting } = useContext(AppContext);
-
   const meetingCardBackground = () => {
     switch (meeting.status) {
       case "END":
@@ -45,26 +35,6 @@ const MeetingCard = ({
     }
   };
 
-  const GUEST_USER: User = { id: "guest", type: "guest" };
-
-  const handleCodeJoin = async (id: string) => {
-    if (!MEETING_ID_REGEX.test(id)) return;
-    const client = new StreamVideoClient({
-      apiKey: API_KEY,
-      user: GUEST_USER,
-    });
-    const call = client.call(CALL_TYPE, id);
-    try {
-      const response = await call.get();
-      if (response.call) router.push(`/${id}`);
-    } catch (e) {
-      if (e instanceof ErrorFromResponse && e.status === 404) {
-        setNewMeeting(true);
-        router.push(`/${id}`);
-      }
-    }
-  };
-
   return (
     <Card
       className={clsx(
@@ -72,7 +42,7 @@ const MeetingCard = ({
         className,
         meetingCardBackground()
       )}
-      onClick={() => handleCodeJoin(meeting.nanoid)}
+      onClick={() => handleOnClick && handleOnClick(meeting)}
     >
       <CardHeader className="pb-4 mb-2 flex flex-row items-center justify-between">
         <CardTitle>{meeting.title}</CardTitle>
@@ -108,7 +78,9 @@ const MeetingCard = ({
           <CalendarIcon className="mr-1 h-3 w-3 text-gray-500" />
           <div className="space-y-1">
             <p className="text-sm font-medium leading-tight text-gray-500">
-              {new Date(meeting.occurred_at ?? meeting.created_at).toLocaleString("en-US", {
+              {new Date(
+                meeting.occurred_at ?? meeting.created_at
+              ).toLocaleString("en-US", {
                 year: "numeric",
                 month: "long",
                 day: "2-digit",
