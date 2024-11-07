@@ -30,8 +30,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import File from "@/components/icons/File";
 
 interface FileData {
-  signedUrl: string | undefined;
-  url: string | URL | undefined;
   id: string;
   fileName: string;
 }
@@ -66,7 +64,6 @@ const Page = () => {
         }
       );
       setFiles(response.data);
-      console.log(response.data);
     } catch (error) {
       console.error("Error fetching files", error);
       setError("Failed to load files. Please try again.");
@@ -105,12 +102,7 @@ const Page = () => {
       );
       setFiles((prev) => [
         ...prev,
-        {
-          signedUrl: undefined,
-          url: undefined,
-          id: file.name,
-          fileName: file.name.split("\\").pop()!,
-        },
+        { id: file.name, fileName: file.name.split("\\").pop()! },
       ]);
       setOpen(false);
     } catch (error) {
@@ -145,16 +137,15 @@ const Page = () => {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                   {files.map((file) => (
-                    <a
-                      href={file.signedUrl}
+                    <div
                       key={file.id}
-                      className="inline-flex flex-col items-center justify-center p-3 bg-gray-100 rounded-lg transition duration-200 ease-in-out transform hover:bg-gray-200 hover:scale-105 hover:shadow-lg max-w-max"
+                      className="flex flex-col items-center justify-center p-4 bg-gray-100 rounded-lg"
                     >
                       <File className="w-12 h-12" />
                       <p className="mt-2 text-sm font-semibold text-gray-600 dark:text-gray-300 truncate">
                         {file.fileName.slice(0, 20) + "..."}
                       </p>
-                    </a>
+                    </div>
                   ))}
                 </div>
               )}
