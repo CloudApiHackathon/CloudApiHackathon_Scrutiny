@@ -11,6 +11,8 @@
   "dependencies": {
     "@auth0/nextjs-auth0": "^3.5.0",
     "@google/generative-ai": "^0.21.0",
+    "@grpc/grpc-js": "^1.12.2",
+    "@grpc/proto-loader": "^0.7.13",
     "@gsap/react": "^2.1.1",
     "@hookform/resolvers": "^3.9.1",
     "@radix-ui/react-avatar": "^1.1.1",
