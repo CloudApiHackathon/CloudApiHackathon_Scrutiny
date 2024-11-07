@@ -4,6 +4,8 @@ import { UserProvider } from "@auth0/nextjs-auth0/client";
 import "@/styles/globals.css";
 import AppProvider from "@/contexts/AppProvider";
 import { Inter } from "next/font/google";
+import {NextUIProvider} from "@nextui-org/system";
+import React from "react";
 
 // const geistSans = localFont({
 //   src: "fonts/GeistVF.woff",

@@ -30,6 +30,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import File from "@/components/icons/File";
 
 interface FileData {
+<<<<<<< HEAD
+=======
+  signedUrl: string | undefined;
+  url: string | URL | undefined;
+>>>>>>> 8355ab9 (temporary assume that bucket is public)
   id: string;
   fileName: string;
 }
@@ -102,7 +107,16 @@ const Page = () => {
       );
       setFiles((prev) => [
         ...prev,
+<<<<<<< HEAD
         { id: file.name, fileName: file.name.split("\\").pop()! },
+=======
+        {
+          signedUrl: undefined,
+          url: undefined,
+          id: file.name,
+          fileName: file.name.split("\\").pop()!,
+        },
+>>>>>>> 8355ab9 (temporary assume that bucket is public)
       ]);
       setOpen(false);
     } catch (error) {
@@ -137,7 +151,12 @@ const Page = () => {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                   {files.map((file) => (
+<<<<<<< HEAD
                     <div
+=======
+                    <a
+                      href={file.signedUrl}
+>>>>>>> 8355ab9 (temporary assume that bucket is public)
                       key={file.id}
                       className="flex flex-col items-center justify-center p-4 bg-gray-100 rounded-lg"
                     >
@@ -145,7 +164,7 @@ const Page = () => {
                       <p className="mt-2 text-sm font-semibold text-gray-600 dark:text-gray-300 truncate">
                         {file.fileName.slice(0, 20) + "..."}
                       </p>
-                    </div>
+                    </a>
                   ))}
                 </div>
               )}

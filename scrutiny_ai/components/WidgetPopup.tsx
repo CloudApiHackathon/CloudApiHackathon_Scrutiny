@@ -5,16 +5,19 @@ import EditNote from './icons/EditNote';
 import Robot from './icons/Robot';
 import Code from './icons/Code';
 import WhiteboardPopup from "./WhiteBoardPopup";
+import ChatBotPopup from "./ChatBotPopup";
 
 interface WidgetPopupProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenChange?: (isOpen: boolean) => void; // New prop to inform parent about open state
+  setIsCodeEditorOpen: (isOpen: boolean) => void;
 }
 
-const WidgetPopup = ({ isOpen, onClose, onOpenChange }: WidgetPopupProps) => {
+const WidgetPopup = ({ isOpen, onClose, onOpenChange, setIsCodeEditorOpen }: WidgetPopupProps) => {
   const router = useRouter();
   const [isWhiteboardOpen, setIsWhiteboardOpen] = useState(false); // State for WhiteboardPopup
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false); // State for ChatbotPopup
 
   useEffect(() => {
     if (onOpenChange) {
@@ -28,10 +31,11 @@ const WidgetPopup = ({ isOpen, onClose, onOpenChange }: WidgetPopupProps) => {
         setIsWhiteboardOpen(true); // Open WhiteboardPopup
         break;
       case 'Chatbot':
-        router.push('/chatbot');
+        setIsChatbotOpen(true); // Open ChatbotPopup
         break;
-      case 'Coding':
-        router.push('/coding');
+      case 'Code':
+        onClose();
+        setIsCodeEditorOpen(true);
         break;
       default:
         console.log('No action defined.');
@@ -90,8 +94,15 @@ const WidgetPopup = ({ isOpen, onClose, onOpenChange }: WidgetPopupProps) => {
       {isWhiteboardOpen && (
         <WhiteboardPopup
           isOpen={isWhiteboardOpen}
-          onClose={() => setIsWhiteboardOpen(false)} // Close WhiteboardPopup
-          onOpenChange={(state) => setIsWhiteboardOpen(state)} // Optionally notify parent about state changes
+          onClose={() => setIsWhiteboardOpen(false)}
+          onOpenChange={(state) => setIsWhiteboardOpen(state)}
+        />
+      )}
+      {isChatbotOpen && (
+        <ChatBotPopup
+          isOpen={isChatbotOpen}
+          onClose={() => setIsChatbotOpen(false)}
+          onOpenChange={(state) => setIsChatbotOpen(state)}
         />
       )}
     </>
